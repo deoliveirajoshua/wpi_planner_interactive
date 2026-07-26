@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WPI Course Dependency Graph & Planner</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Vis.js Standalone Bundle -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+  <!-- Top Header Navigation Bar -->
+  <header id="header">
+    <div class="brand">
+      <div class="brand-icon">W</div>
+      <div class="brand-title">
+        <h1>WPI Course Dependency Graph</h1>
+        <p>Worcester Polytechnic Institute</p>
+      </div>
+    </div>
+    
+    <!-- Controls Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..." onkeydown="handleSearchInput(event)">
+        <div id="search-dropdown" class="search-dropdown"></div>
+      </div>
+      
+      <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
+        <option value="ALL">All Departments</option>
+      </select>
+      
+      <button class="btn" onclick="resetView()">Reset View</button>
+    </div>
+  </header>
+
+  <!-- Main Application Workspace -->
+  <div id="main-container">
+    <!-- Floating Stats Bar & Anchored Courses Control Bar -->
+    <div class="stats-bar">
+      <div class="stat-pill">Courses: <span id="stat-courses" class="num">0</span></div>
+      <div class="stat-pill">Departments: <span id="stat-depts" class="num">0</span></div>
+      <div class="stat-pill">Prerequisite Links: <span id="stat-links" class="num">0</span></div>
+      <div id="anchored-container" class="anchored-bar" style="display: none;"></div>
+    </div>
+
+    <!-- Vis.js Network Canvas -->
+    <div id="mynetwork"></div>
+
+    <!-- Right Sidebar Drawer -->
+    <aside id="sidebar">
+      <div class="sidebar-section">
+        <div class="section-title">Department Selector</div>
+        <div id="legend-grid" class="legend-grid"></div>
+      </div>
+
+      <div class="sidebar-section details-section">
+        <div class="section-title">Course Details</div>
+        <div id="details-panel">
+          <p class="placeholder-msg">Click any course node in the graph to view prerequisites, unlocked courses, and details.<br><br><strong>Tip:</strong> Right-click a course to <strong>Anchor</strong> it and walk down dependency paths!</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Dynamic Hover Popover Tooltip for Sidebar Course Badges -->
+  <div id="badge-tooltip" class="badge-tooltip"></div>
+
+  <!-- Footer -->
+  <footer id="footer">
+    Site owned and maintained by Joshua DeOliveira. Data is collected from <a href="https://planner.wpi.edu/" target="_blank" rel="noopener">https://planner.wpi.edu/</a>. Work was supported in part by a grant entitled <em>"Supporting Student Success: Using Data to Identify Barriers and Design Data Informed Strategies"</em>.
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
