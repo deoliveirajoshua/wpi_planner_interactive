@@ -517,9 +517,11 @@ function restoreOriginalPositions() {
 
 // FULL MAIN VIEW HIGHLIGHT (Keeps background nodes visible)
 function highlightCoursePathFullView(targetCode) {
+  if (selectionMode === 'isolated') {
+    restoreOriginalPositions();
+  }
   selectionMode = 'highlight';
   currentSelectedCourse = targetCode;
-  restoreOriginalPositions();
   hideBadgeTooltip();
 
   const node = rawGraphData[targetCode];
@@ -921,7 +923,8 @@ function renderCourseDetails(node) {
     prereqHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
   }
 
-  const unlockBadges = (node.prerequisite_for || []).length > 0
+  const hasUnlocks = (node.prerequisite_for || []).length > 0;
+  const unlockBadges = hasUnlocks
     ? node.prerequisite_for.map(u => `
         <span class="badge badge-unlock" 
               onclick="selectCourse('${u}')"
@@ -929,9 +932,10 @@ function renderCourseDetails(node) {
               onmousemove="moveBadgeTooltip(event)"
               onmouseleave="hideBadgeTooltip()">${u}</span>
       `).join('')
-    : '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
+    : '';
 
-  const aliasBadges = (node.aliases || []).length > 0
+  const hasAliases = (node.aliases || []).length > 0;
+  const aliasBadges = hasAliases
     ? node.aliases.map(a => `
         <span class="badge badge-alias" 
               onclick="selectCourse('${a}')"
@@ -939,7 +943,7 @@ function renderCourseDetails(node) {
               onmousemove="moveBadgeTooltip(event)"
               onmouseleave="hideBadgeTooltip()">${a}</span>
       `).join('')
-    : '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
+    : '';
 
   const hasPrereqs = (node.prerequisites || []).length > 0;
 
@@ -967,15 +971,19 @@ function renderCourseDetails(node) {
       ${prereqHTML}
     </div>
 
-    <div class="detail-block">
-      <div class="detail-block-label">Unlocks Courses</div>
-      <div class="badge-list">${unlockBadges}</div>
-    </div>
+    ${hasUnlocks ? `
+      <div class="detail-block">
+        <div class="detail-block-label">Unlocks Courses</div>
+        <div class="badge-list">${unlockBadges}</div>
+      </div>
+    ` : ''}
 
-    <div class="detail-block">
-      <div class="detail-block-label">Aliases / Cross-Listed</div>
-      <div class="badge-list">${aliasBadges}</div>
-    </div>
+    ${hasAliases ? `
+      <div class="detail-block">
+        <div class="detail-block-label">Aliases / Cross-Listed</div>
+        <div class="badge-list">${aliasBadges}</div>
+      </div>
+    ` : ''}
 
     ${node.raw_prerequisite_text ? `
       <div class="detail-block">

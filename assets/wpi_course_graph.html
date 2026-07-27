@@ -898,12 +898,13 @@ body {
         <div class="modal-section">
           <div class="modal-section-title">Graph Navigation Controls</div>
           <ul class="help-list">
-            <li><strong>Select Course:</strong> Left-click any course node or course badge to highlight its prerequisite chain and unlocked courses.</li>
-            <li><strong>Pan View:</strong> Hold <strong>Right-Click & Drag</strong> anywhere on the canvas to move around.</li>
+            <li><strong>Single Left-Click:</strong> Click any course node to highlight its prerequisite chain (Indigo) and unlocked courses (Blue) directly in the main view without hiding background courses. Single-click again to unselect.</li>
+            <li><strong>Double Left-Click:</strong> Double-click any course node to enter the <strong>Isolated Focused View</strong> (hiding unrelated background nodes and auto-zooming). Click empty space to return to the full view with your selection preserved.</li>
+            <li><strong>Pan View:</strong> Hold <strong>Right-Click & Drag</strong> anywhere on the canvas to move around smoothly.</li>
             <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
-            <li><strong>Deselect / Reset:</strong> Left-click empty canvas space or click <strong>Reset View</strong> to clear selection.</li>
-            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> in the toolbar to enable or disable live graph physics with a gentle attracting force between connected courses.</li>
+            <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <strong>Show All</strong> in the sidebar to cluster and zoom into department courses.</li>
             <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.</li>
+            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
           </ul>
         </div>
         <div class="modal-section">
@@ -912,7 +913,7 @@ body {
             <li><span class="color-sample red-sample"></span> <strong>Red:</strong> Currently selected focus course.</li>
             <li><span class="color-sample indigo-sample"></span> <strong>Indigo:</strong> Prerequisites required or recommended for the selected course.</li>
             <li><span class="color-sample sky-sample"></span> <strong>Blue:</strong> Courses unlocked after completing the selected course.</li>
-            <li><span class="color-sample white-sample"></span> <strong>White Nodes:</strong> Background courses in the full graph overview.</li>
+            <li><span class="color-sample white-sample"></span> <strong>Cream / Slate Nodes:</strong> Background courses in the full graph overview.</li>
           </ul>
         </div>
       </div>
@@ -49045,9 +49046,11 @@ function restoreOriginalPositions() {
 
 // FULL MAIN VIEW HIGHLIGHT (Keeps background nodes visible)
 function highlightCoursePathFullView(targetCode) {
+  if (selectionMode === 'isolated') {
+    restoreOriginalPositions();
+  }
   selectionMode = 'highlight';
   currentSelectedCourse = targetCode;
-  restoreOriginalPositions();
   hideBadgeTooltip();
 
   const node = rawGraphData[targetCode];
@@ -49449,7 +49452,8 @@ function renderCourseDetails(node) {
     prereqHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
   }
 
-  const unlockBadges = (node.prerequisite_for || []).length > 0
+  const hasUnlocks = (node.prerequisite_for || []).length > 0;
+  const unlockBadges = hasUnlocks
     ? node.prerequisite_for.map(u => `
         <span class="badge badge-unlock" 
               onclick="selectCourse('${u}')"
@@ -49457,9 +49461,10 @@ function renderCourseDetails(node) {
               onmousemove="moveBadgeTooltip(event)"
               onmouseleave="hideBadgeTooltip()">${u}</span>
       `).join('')
-    : '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
+    : '';
 
-  const aliasBadges = (node.aliases || []).length > 0
+  const hasAliases = (node.aliases || []).length > 0;
+  const aliasBadges = hasAliases
     ? node.aliases.map(a => `
         <span class="badge badge-alias" 
               onclick="selectCourse('${a}')"
@@ -49467,7 +49472,7 @@ function renderCourseDetails(node) {
               onmousemove="moveBadgeTooltip(event)"
               onmouseleave="hideBadgeTooltip()">${a}</span>
       `).join('')
-    : '<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>';
+    : '';
 
   const hasPrereqs = (node.prerequisites || []).length > 0;
 
@@ -49495,15 +49500,19 @@ function renderCourseDetails(node) {
       ${prereqHTML}
     </div>
 
-    <div class="detail-block">
-      <div class="detail-block-label">Unlocks Courses</div>
-      <div class="badge-list">${unlockBadges}</div>
-    </div>
+    ${hasUnlocks ? `
+      <div class="detail-block">
+        <div class="detail-block-label">Unlocks Courses</div>
+        <div class="badge-list">${unlockBadges}</div>
+      </div>
+    ` : ''}
 
-    <div class="detail-block">
-      <div class="detail-block-label">Aliases / Cross-Listed</div>
-      <div class="badge-list">${aliasBadges}</div>
-    </div>
+    ${hasAliases ? `
+      <div class="detail-block">
+        <div class="detail-block-label">Aliases / Cross-Listed</div>
+        <div class="badge-list">${aliasBadges}</div>
+      </div>
+    ` : ''}
 
     ${node.raw_prerequisite_text ? `
       <div class="detail-block">

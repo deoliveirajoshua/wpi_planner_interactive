@@ -174,12 +174,13 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
         <div class="modal-section">
           <div class="modal-section-title">Graph Navigation Controls</div>
           <ul class="help-list">
-            <li><strong>Select Course:</strong> Left-click any course node or course badge to highlight its prerequisite chain and unlocked courses.</li>
-            <li><strong>Pan View:</strong> Hold <strong>Right-Click & Drag</strong> anywhere on the canvas to move around.</li>
+            <li><strong>Single Left-Click:</strong> Click any course node to highlight its prerequisite chain (Indigo) and unlocked courses (Blue) directly in the main view without hiding background courses. Single-click again to unselect.</li>
+            <li><strong>Double Left-Click:</strong> Double-click any course node to enter the <strong>Isolated Focused View</strong> (hiding unrelated background nodes and auto-zooming). Click empty space to return to the full view with your selection preserved.</li>
+            <li><strong>Pan View:</strong> Hold <strong>Right-Click & Drag</strong> anywhere on the canvas to move around smoothly.</li>
             <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
-            <li><strong>Deselect / Reset:</strong> Left-click empty canvas space or click <strong>Reset View</strong> to clear selection.</li>
-            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> in the toolbar to enable or disable live graph physics with a gentle attracting force between connected courses.</li>
+            <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <strong>Show All</strong> in the sidebar to cluster and zoom into department courses.</li>
             <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.</li>
+            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
           </ul>
         </div>
         <div class="modal-section">
@@ -188,7 +189,7 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
             <li><span class="color-sample red-sample"></span> <strong>Red:</strong> Currently selected focus course.</li>
             <li><span class="color-sample indigo-sample"></span> <strong>Indigo:</strong> Prerequisites required or recommended for the selected course.</li>
             <li><span class="color-sample sky-sample"></span> <strong>Blue:</strong> Courses unlocked after completing the selected course.</li>
-            <li><span class="color-sample white-sample"></span> <strong>White Nodes:</strong> Background courses in the full graph overview.</li>
+            <li><span class="color-sample white-sample"></span> <strong>Cream / Slate Nodes:</strong> Background courses in the full graph overview.</li>
           </ul>
         </div>
       </div>
