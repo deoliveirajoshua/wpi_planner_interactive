@@ -120,13 +120,15 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
         <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..." onkeyup="handleSearchInput(event)" autocomplete="off">
         <div id="search-dropdown" class="search-dropdown"></div>
       </div>
-      <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
-        <option value="ALL">All Departments</option>
-        {dept_options_html}
-      </select>
-      <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
-      <button class="btn" onclick="resetView()">Reset View</button>
-      <button class="btn" onclick="openHelpModal()">Help</button>
+      <div class="toolbar-right-group">
+        <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
+          <option value="ALL">All Departments</option>
+          {dept_options_html}
+        </select>
+        <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
+        <button class="btn" onclick="resetView()">Reset View</button>
+        <button class="btn" onclick="openHelpModal()">Help</button>
+      </div>
     </div>
   </header>
 

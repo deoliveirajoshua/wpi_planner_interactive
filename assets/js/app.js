@@ -517,6 +517,10 @@ function restoreOriginalPositions() {
 
 // FULL MAIN VIEW HIGHLIGHT (Keeps background nodes visible)
 function highlightCoursePathFullView(targetCode) {
+  // Freeze physics when inspecting a course so nodes stay stationary
+  network.setOptions({ physics: { enabled: false } });
+  network.stopSimulation();
+
   if (selectionMode === 'isolated') {
     restoreOriginalPositions();
   }
@@ -677,8 +681,15 @@ function highlightCoursePathIsolated(targetCode) {
 
 // BATCHED OPTIMIZED CLEAR
 function clearHighlightPath() {
+  if (selectionMode === 'none' && !currentSelectedCourse) {
+    return; // Already in clean unselected state; no re-render needed
+  }
+
+  if (selectionMode === 'isolated') {
+    restoreOriginalPositions();
+  }
+
   selectionMode = 'none';
-  restoreOriginalPositions();
   currentSelectedCourse = null;
   hideBadgeTooltip();
 
@@ -722,6 +733,27 @@ function clearHighlightPath() {
 
   nodesDataSet.update(nodeUpdates);
   edgesDataSet.update(edgeUpdates);
+
+  // Re-enable physics only if physics toggle is ON and returning to unselected main view
+  if (isPhysicsEnabled) {
+    const cfg = (currentDept && currentDept !== 'ALL') ? PHYSICS_CONFIG.department : PHYSICS_CONFIG.full;
+    network.setOptions({
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: cfg.gravitationalConstant,
+          centralGravity: cfg.centralGravity,
+          springLength: cfg.springLength,
+          springConstant: cfg.springConstant,
+          damping: cfg.damping,
+          avoidOverlap: cfg.avoidOverlap || 0.8
+        },
+        stabilization: { enabled: false }
+      }
+    });
+    network.startSimulation();
+  }
 }
 
 // Network Event Click Handlers

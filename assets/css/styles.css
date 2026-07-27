@@ -33,7 +33,7 @@
   --badge-amber-text: #92400e;
   --badge-amber-border: #fde68a;
 
-  --sidebar-width: 420px;
+  --sidebar-width: 480px;
   --header-height: 60px;
   --footer-height: 40px;
 }
@@ -106,10 +106,19 @@ body {
 }
 
 /* Controls Toolbar */
-.toolbar {
+.toolbar,
+.controls-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.toolbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(var(--sidebar-width) - 24px);
+  justify-content: space-between;
 }
 
 .search-box {

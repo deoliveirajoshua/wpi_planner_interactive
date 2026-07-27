@@ -44,7 +44,7 @@
   --badge-amber-text: #92400e;
   --badge-amber-border: #fde68a;
 
-  --sidebar-width: 420px;
+  --sidebar-width: 480px;
   --header-height: 60px;
   --footer-height: 40px;
 }
@@ -117,10 +117,19 @@ body {
 }
 
 /* Controls Toolbar */
-.toolbar {
+.toolbar,
+.controls-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.toolbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(var(--sidebar-width) - 24px);
+  justify-content: space-between;
 }
 
 .search-box {
@@ -844,13 +853,15 @@ body {
         <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..." onkeyup="handleSearchInput(event)" autocomplete="off">
         <div id="search-dropdown" class="search-dropdown"></div>
       </div>
-      <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
-        <option value="ALL">All Departments</option>
-        <option value="AB">AB</option><option value="ACC">ACC</option><option value="AE">AE</option><option value="AR">AR</option><option value="ARCH">ARCH</option><option value="AREN">AREN</option><option value="AS">AS</option><option value="BB">BB</option><option value="BCB">BCB</option><option value="BME">BME</option><option value="BUS">BUS</option><option value="CE">CE</option><option value="CH">CH</option><option value="CHE">CHE</option><option value="CN">CN</option><option value="CS">CS</option><option value="DEV">DEV</option><option value="DS">DS</option><option value="ECE">ECE</option><option value="ECON">ECON</option><option value="EDU">EDU</option><option value="EN">EN</option><option value="ENV">ENV</option><option value="ES">ES</option><option value="ESL">ESL</option><option value="ETR">ETR</option><option value="FIN">FIN</option><option value="FP">FP</option><option value="FY">FY</option><option value="GE">GE</option><option value="GN">GN</option><option value="GOV">GOV</option><option value="HI">HI</option><option value="HU">HU</option><option value="ID">ID</option><option value="IDG">IDG</option><option value="IGS">IGS</option><option value="IMGD">IMGD</option><option value="INTL">INTL</option><option value="ISE">ISE</option><option value="MA">MA</option><option value="ME">ME</option><option value="MFE">MFE</option><option value="MIS">MIS</option><option value="MKT">MKT</option><option value="ML">ML</option><option value="MME">MME</option><option value="MTE">MTE</option><option value="MU">MU</option><option value="NEU">NEU</option><option value="NSE">NSE</option><option value="OBC">OBC</option><option value="OIE">OIE</option><option value="PH">PH</option><option value="PSY">PSY</option><option value="PY">PY</option><option value="RBE">RBE</option><option value="RE">RE</option><option value="SD">SD</option><option value="SP">SP</option><option value="SS">SS</option><option value="STS">STS</option><option value="SYS">SYS</option><option value="TH">TH</option><option value="WPE">WPE</option><option value="WR">WR</option>
-      </select>
-      <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
-      <button class="btn" onclick="resetView()">Reset View</button>
-      <button class="btn" onclick="openHelpModal()">Help</button>
+      <div class="toolbar-right-group">
+        <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
+          <option value="ALL">All Departments</option>
+          <option value="AB">AB</option><option value="ACC">ACC</option><option value="AE">AE</option><option value="AR">AR</option><option value="ARCH">ARCH</option><option value="AREN">AREN</option><option value="AS">AS</option><option value="BB">BB</option><option value="BCB">BCB</option><option value="BME">BME</option><option value="BUS">BUS</option><option value="CE">CE</option><option value="CH">CH</option><option value="CHE">CHE</option><option value="CN">CN</option><option value="CS">CS</option><option value="DEV">DEV</option><option value="DS">DS</option><option value="ECE">ECE</option><option value="ECON">ECON</option><option value="EDU">EDU</option><option value="EN">EN</option><option value="ENV">ENV</option><option value="ES">ES</option><option value="ESL">ESL</option><option value="ETR">ETR</option><option value="FIN">FIN</option><option value="FP">FP</option><option value="FY">FY</option><option value="GE">GE</option><option value="GN">GN</option><option value="GOV">GOV</option><option value="HI">HI</option><option value="HU">HU</option><option value="ID">ID</option><option value="IDG">IDG</option><option value="IGS">IGS</option><option value="IMGD">IMGD</option><option value="INTL">INTL</option><option value="ISE">ISE</option><option value="MA">MA</option><option value="ME">ME</option><option value="MFE">MFE</option><option value="MIS">MIS</option><option value="MKT">MKT</option><option value="ML">ML</option><option value="MME">MME</option><option value="MTE">MTE</option><option value="MU">MU</option><option value="NEU">NEU</option><option value="NSE">NSE</option><option value="OBC">OBC</option><option value="OIE">OIE</option><option value="PH">PH</option><option value="PSY">PSY</option><option value="PY">PY</option><option value="RBE">RBE</option><option value="RE">RE</option><option value="SD">SD</option><option value="SP">SP</option><option value="SS">SS</option><option value="STS">STS</option><option value="SYS">SYS</option><option value="TH">TH</option><option value="WPE">WPE</option><option value="WR">WR</option>
+        </select>
+        <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
+        <button class="btn" onclick="resetView()">Reset View</button>
+        <button class="btn" onclick="openHelpModal()">Help</button>
+      </div>
     </div>
   </header>
 
@@ -49046,6 +49057,10 @@ function restoreOriginalPositions() {
 
 // FULL MAIN VIEW HIGHLIGHT (Keeps background nodes visible)
 function highlightCoursePathFullView(targetCode) {
+  // Freeze physics when inspecting a course so nodes stay stationary
+  network.setOptions({ physics: { enabled: false } });
+  network.stopSimulation();
+
   if (selectionMode === 'isolated') {
     restoreOriginalPositions();
   }
@@ -49206,8 +49221,15 @@ function highlightCoursePathIsolated(targetCode) {
 
 // BATCHED OPTIMIZED CLEAR
 function clearHighlightPath() {
+  if (selectionMode === 'none' && !currentSelectedCourse) {
+    return; // Already in clean unselected state; no re-render needed
+  }
+
+  if (selectionMode === 'isolated') {
+    restoreOriginalPositions();
+  }
+
   selectionMode = 'none';
-  restoreOriginalPositions();
   currentSelectedCourse = null;
   hideBadgeTooltip();
 
@@ -49251,6 +49273,27 @@ function clearHighlightPath() {
 
   nodesDataSet.update(nodeUpdates);
   edgesDataSet.update(edgeUpdates);
+
+  // Re-enable physics only if physics toggle is ON and returning to unselected main view
+  if (isPhysicsEnabled) {
+    const cfg = (currentDept && currentDept !== 'ALL') ? PHYSICS_CONFIG.department : PHYSICS_CONFIG.full;
+    network.setOptions({
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: cfg.gravitationalConstant,
+          centralGravity: cfg.centralGravity,
+          springLength: cfg.springLength,
+          springConstant: cfg.springConstant,
+          damping: cfg.damping,
+          avoidOverlap: cfg.avoidOverlap || 0.8
+        },
+        stabilization: { enabled: false }
+      }
+    });
+    network.startSimulation();
+  }
 }
 
 // Network Event Click Handlers
