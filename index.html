@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WPI Course Dependency Graph & Planner</title>
-  
+  <title>WPI Course Catalog Visualizer</title>
+
   <!-- Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap"
+    rel="stylesheet">
+
   <!-- Vis.js Standalone Bundle -->
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  
+
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
+
 <body>
 
   <!-- Top Header Navigation Bar -->
@@ -23,34 +27,36 @@
     <div class="brand">
       <div class="brand-icon">W</div>
       <div class="brand-title">
-        <h1>WPI Course Dependency Graph</h1>
+        <h1>Course Catalog Visualizer</h1>
         <p>Worcester Polytechnic Institute</p>
       </div>
     </div>
-    
+
     <!-- Controls Toolbar -->
     <div class="toolbar">
       <div class="search-box">
-        <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..." onkeydown="handleSearchInput(event)">
+        <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..."
+          onkeydown="handleSearchInput(event)">
         <div id="search-dropdown" class="search-dropdown"></div>
       </div>
-      
+
       <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
         <option value="ALL">All Departments</option>
       </select>
-      
+
+      <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
       <button class="btn" onclick="resetView()">Reset View</button>
+      <button class="btn" onclick="openHelpModal()">Help</button>
     </div>
   </header>
 
   <!-- Main Application Workspace -->
   <div id="main-container">
-    <!-- Floating Stats Bar & Anchored Courses Control Bar -->
+    <!-- Floating Stats Bar -->
     <div class="stats-bar">
       <div class="stat-pill">Courses: <span id="stat-courses" class="num">0</span></div>
       <div class="stat-pill">Departments: <span id="stat-depts" class="num">0</span></div>
       <div class="stat-pill">Prerequisite Links: <span id="stat-links" class="num">0</span></div>
-      <div id="anchored-container" class="anchored-bar" style="display: none;"></div>
     </div>
 
     <!-- Vis.js Network Canvas -->
@@ -59,14 +65,20 @@
     <!-- Right Sidebar Drawer -->
     <aside id="sidebar">
       <div class="sidebar-section">
-        <div class="section-title">Department Selector</div>
-        <div id="legend-grid" class="legend-grid"></div>
+        <div class="section-title-row">
+          <div class="section-title" id="dept-courses-title">Department Courses</div>
+          <button id="dept-show-all-btn" class="btn-xs" style="display: none;">Show All</button>
+        </div>
+        <div id="dept-courses-list" class="dept-courses-list">
+          <p class="placeholder-msg">Select a department or click a course to view all courses in that department.</p>
+        </div>
       </div>
 
       <div class="sidebar-section details-section">
         <div class="section-title">Course Details</div>
         <div id="details-panel">
-          <p class="placeholder-msg">Click any course node in the graph to view prerequisites, unlocked courses, and details.<br><br><strong>Tip:</strong> Right-click a course to <strong>Anchor</strong> it and walk down dependency paths!</p>
+          <p class="placeholder-msg">Click any course node in the graph to view prerequisites, unlocked courses, and
+            details.</p>
         </div>
       </div>
     </aside>
@@ -75,12 +87,46 @@
   <!-- Dynamic Hover Popover Tooltip for Sidebar Course Badges -->
   <div id="badge-tooltip" class="badge-tooltip"></div>
 
-  <!-- Footer -->
+  <!-- Help Modal Overlay -->
+  <div id="help-modal-overlay" class="modal-overlay" onclick="handleModalOverlayClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>How to Use Course Visualizer</h2>
+        <button class="modal-close-btn" onclick="closeHelpModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3>Navigation & Controls</h3>
+          <ul class="help-list">
+            <li><strong>Select Course:</strong> Left-click any course node in the graph, click a course in the search dropdown, or select from the department list in the sidebar.</li>
+            <li><strong>Pan View:</strong> Hold <strong>Right-Click & Drag</strong> anywhere on the canvas to move around.</li>
+            <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
+            <li><strong>Deselect / Reset:</strong> Left-click empty canvas space or click <strong>Reset View</strong> to clear selection.</li>
+            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> in the toolbar to enable or disable live graph physics with a gentle attracting force between connected courses.</li>
+            <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.</li>
+          </ul>
+        </div>
+        <div class="modal-section">
+          <h3>Interpreting the Graph</h3>
+          <ul class="help-list">
+            <li><span class="color-sample red-sample"></span> <strong>Red:</strong> Currently selected focus course.</li>
+            <li><span class="color-sample indigo-sample"></span> <strong>Indigo:</strong> Prerequisites required or recommended for the selected course.</li>
+            <li><span class="color-sample sky-sample"></span> <strong>Blue:</strong> Courses unlocked after completing the selected course.</li>
+            <li><span class="color-sample white-sample"></span> <strong>White Nodes:</strong> Background courses in the full graph overview.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer id="footer">
-    Site owned and maintained by Joshua DeOliveira. Data is collected from <a href="https://planner.wpi.edu/" target="_blank" rel="noopener">https://planner.wpi.edu/</a>. Work was supported in part by a grant entitled <em>"Supporting Student Success: Using Data to Identify Barriers and Design Data Informed Strategies"</em>.
+    Site maintained by Joshua DeOliveira. Data is collected from &nbsp;<a href="https://planner.wpi.edu/"
+      target="_blank" rel="noopener">https://planner.wpi.edu/</a>. Work was supported in part by a grant entitled
+    <em>"Supporting Student Success: Using Data to Identify Barriers and Design Data Informed Strategies"</em>.
   </footer>
 
   <!-- Application Logic -->
   <script src="assets/js/app.js"></script>
 </body>
+
 </html>

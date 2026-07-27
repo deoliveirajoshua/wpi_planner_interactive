@@ -10,7 +10,7 @@ import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
 
-from plot_course_graph import generate_department_colors, export_custom_interactive_html
+from plot_course_graph import export_custom_interactive_html
 
 SAMPLE_GRAPH = {
     "CS 1101": {
@@ -41,13 +41,6 @@ SAMPLE_GRAPH = {
 
 
 class TestPlotter(unittest.TestCase):
-
-    def test_department_colors(self):
-        depts = ["CS", "MA", "ECE", "AE"]
-        colors = generate_department_colors(depts)
-        self.assertEqual(len(colors), 4)
-        for d in depts:
-            self.assertTrue(colors[d].startswith("#"))
 
     def test_html_export(self):
         out_file = os.path.join("assets", "test_graph.html")

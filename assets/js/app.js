@@ -1,7 +1,7 @@
 /**
  * WPI Course Graph & Planner Application Logic
  * Powered by Flagger Academic Engine & Vis.js
- * Right-Click Anchoring, Path Walking & Recursive Prerequisite Tree Unwinding
+ * Path Walking & Recursive Prerequisite Tree Unwinding
  */
 
 let rawGraphData = {};
@@ -15,33 +15,77 @@ let searchSelectedIndex = -1;
 let currentSearchMatches = [];
 
 let currentSelectedCourse = null;
-let anchoredCourseCodes = new Set();
 let showAllPrereqsActive = false;
+let isPhysicsEnabled = false;
 
-const COLOR_DEFAULT_NODE = '#ffffff';
-const COLOR_DEFAULT_BORDER = '#64748b';
-const COLOR_DEFAULT_TEXT = '#0f172a';
+// ============================================================================
+// CENTRAL PHYSICS CONFIGURATION
+// Edit these parameters to tune graph physics behavior across the application.
+// ============================================================================
+const PHYSICS_CONFIG = {
+  department: {
+    gravitationalConstant: -25, // Gentle repulsion force between department nodes
+    centralGravity: 0.04,       // Steady inward attraction to department center
+    springLength: 75,           // Resting distance between connected courses
+    springConstant: 0.06,       // Smooth spring stiffness
+    damping: 0.55,              // High friction to absorb motion and eliminate jitter
+    avoidOverlap: 0.8           // Prevent node overlaps smoothly
+  },
+  full: {
+    gravitationalConstant: -35, // Repulsion force for full campus graph
+    centralGravity: 0.005,      // Inward attraction to canvas center
+    springLength: 110,          // Resting distance for full graph
+    springConstant: 0.05,       // Stiffness of full graph spring connections
+    damping: 0.5,               // High friction to prevent vibration
+    avoidOverlap: 0.5           // Prevent node overlaps
+  }
+};
 
+const COLOR_DEFAULT_NODE = '#fcfaf6';     // Soft warm cream porcelain
+const COLOR_DEFAULT_BORDER = '#94a3b8';   // Clean slate taupe border
+const COLOR_DEFAULT_TEXT = '#2b3648';     // Deep espresso slate text
+const COLOR_DEFAULT_STROKE = '#f5f0e6';   // Matching champagne halo
+const COLOR_DEFAULT_EDGE = '#d4ceb8';     // Soft warm parchment edges
+
+const COLOR_HOVER_NODE = '#fff5f5';       // Soft crimson silk hover background
 const COLOR_WPI_CRIMSON = '#AC2B37';
-const COLOR_ANCHOR_GOLD = '#d97706';
 const COLOR_PREREQ_ANCESTOR = '#4338ca';   // Deep Royal Indigo for Direct Prerequisites
 const COLOR_UNLOCK_DESCENDANT = '#0284c7';  // Ocean Sky Blue for Direct Unlocked Courses
 
 // Initialize Application
 async function initApp() {
   try {
-    const response = await fetch('data/wpi_course_graph.json');
-    if (!response.ok) {
-      throw new Error(`Failed to load graph data: ${response.status}`);
+    if (typeof window.rawEmbeddedNodes !== 'undefined' && Array.isArray(window.rawEmbeddedNodes)) {
+      rawGraphData = {};
+      window.rawEmbeddedNodes.forEach(n => {
+        rawGraphData[n.id] = {
+          course_code: n.id,
+          course_name: n.name,
+          department_code: n.department,
+          department: n.department,
+          prerequisites: n.prerequisites || [],
+          prerequisites_structured: n.prerequisites_structured || [],
+          prerequisite_for: n.prerequisite_for || [],
+          aliases: n.aliases || [],
+          raw_prerequisite_text: n.description || '',
+          min_credits: n.min_credits || '3.0'
+        };
+      });
+    } else {
+      const response = await fetch('data/wpi_course_graph.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load graph data: ${response.status}`);
+      }
+      rawGraphData = await response.json();
     }
-    rawGraphData = await response.json();
+
     renderStats(rawGraphData);
     setupNetwork(rawGraphData);
     populateDepartmentSelect(rawGraphData);
-    renderLegend(rawGraphData);
+    renderDepartmentCourses('ALL', null);
 
     // Hide search dropdown on click outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       const searchBox = document.querySelector('.search-box');
       if (searchBox && !searchBox.contains(e.target)) {
         const dropdown = document.getElementById('search-dropdown');
@@ -86,7 +130,7 @@ function setupNetwork(graphData) {
         background: COLOR_DEFAULT_NODE,
         border: COLOR_DEFAULT_BORDER,
         highlight: { background: COLOR_WPI_CRIMSON, border: COLOR_WPI_CRIMSON },
-        hover: { background: '#f8fafc', border: COLOR_WPI_CRIMSON }
+        hover: { background: COLOR_HOVER_NODE, border: COLOR_WPI_CRIMSON }
       },
       font: {
         color: COLOR_DEFAULT_TEXT,
@@ -94,7 +138,7 @@ function setupNetwork(graphData) {
         face: 'Inter',
         weight: '600',
         strokeWidth: 3,
-        strokeColor: '#ffffff'
+        strokeColor: COLOR_DEFAULT_STROKE
       },
       department: dept
     });
@@ -109,7 +153,7 @@ function setupNetwork(graphData) {
             from: prereq,
             to: code,
             arrows: { to: { enabled: true, scaleFactor: 0.4 } },
-            color: { color: '#cbd5e1', highlight: COLOR_WPI_CRIMSON },
+            color: { color: COLOR_DEFAULT_EDGE, highlight: COLOR_WPI_CRIMSON },
             width: 1.2
           });
           addedEdges.add(edgeKey);
@@ -140,12 +184,6 @@ function setupNetwork(graphData) {
   edgesDataSet = new vis.DataSet(edges);
 
   const container = document.getElementById('mynetwork');
-
-  // Prevent default context menu & bind Right-Click Anchoring
-  container.addEventListener('contextmenu', function (e) {
-    e.preventDefault();
-  });
-
   const data = { nodes: nodesDataSet, edges: edgesDataSet };
 
   const options = {
@@ -155,16 +193,17 @@ function setupNetwork(graphData) {
       borderWidth: 1.5
     },
     edges: {
-      smooth: { type: 'continuous', roundness: 0.2 }
+      smooth: { type: 'continuous', roundness: 0.3 }
     },
     physics: {
       enabled: true,
-      solver: 'barnesHut',
-      barnesHut: {
-        gravitationalConstant: -3000,
-        centralGravity: 0.3,
-        springLength: 100,
-        springConstant: 0.04
+      solver: 'forceAtlas2Based',
+      forceAtlas2Based: {
+        gravitationalConstant: PHYSICS_CONFIG.full.gravitationalConstant,
+        centralGravity: PHYSICS_CONFIG.full.centralGravity,
+        springLength: PHYSICS_CONFIG.full.springLength,
+        springConstant: PHYSICS_CONFIG.full.springConstant,
+        damping: PHYSICS_CONFIG.full.damping
       },
       stabilization: {
         enabled: true,
@@ -177,12 +216,55 @@ function setupNetwork(graphData) {
       hover: true,
       tooltipDelay: 100,
       navigationButtons: false,
-      dragView: true,
+      dragView: false,
       zoomView: true
     }
   };
 
   network = new vis.Network(container, data, options);
+
+  network.once('stabilizationIterationsDone', function () {
+    network.setOptions({ physics: { enabled: isPhysicsEnabled } });
+  });
+
+  // Right-Click Drag Canvas Panning Handler
+  let isRightDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let initialViewPos = { x: 0, y: 0 };
+
+  container.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+  });
+
+  container.addEventListener('mousedown', function (e) {
+    if (e.button === 2) {
+      isRightDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      initialViewPos = network.getViewPosition();
+    }
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (isRightDragging && network) {
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      const scale = network.getScale();
+      network.moveTo({
+        position: {
+          x: initialViewPos.x - (dx / scale),
+          y: initialViewPos.y - (dy / scale)
+        }
+      });
+    }
+  });
+
+  document.addEventListener('mouseup', function (e) {
+    if (e.button === 2) {
+      isRightDragging = false;
+    }
+  });
 
   // Disable physics immediately after initial stabilization & record base positions
   network.once('stabilizationIterationsDone', function () {
@@ -194,23 +276,12 @@ function setupNetwork(graphData) {
   });
 
   // Left-Click: Select Course
-  network.on('click', function(params) {
+  network.on('click', function (params) {
     if (params.nodes.length > 0) {
       const code = params.nodes[0];
       selectCourse(code);
     } else {
-      if (anchoredCourseCodes.size === 0) {
-        clearHighlightPath();
-      }
-    }
-  });
-
-  // Right-Click: Toggle Anchor Course
-  network.on('oncontext', function(params) {
-    params.event.preventDefault();
-    const nodeId = network.getNodeAt(params.pointer.DOM);
-    if (nodeId) {
-      toggleAnchorCourse(nodeId);
+      clearHighlightPath();
     }
   });
 }
@@ -252,10 +323,10 @@ function getAllUpstreamPrereqs(targetCode) {
   };
 }
 
-// RADIAL FOCUS LAYOUT ENGINE WITH ANCHORING & RECURSIVE TREE UNWINDING
+// RADIAL FOCUS LAYOUT ENGINE WITH RECURSIVE TREE UNWINDING
 function highlightCoursePath(targetCode) {
   const targetNode = rawGraphData[targetCode];
-  if (!targetNode && anchoredCourseCodes.size === 0) return new Set();
+  if (!targetNode) return new Set();
 
   restoreOriginalPositions();
 
@@ -278,16 +349,6 @@ function highlightCoursePath(targetCode) {
     directUnlocks.forEach(u => activeNodeIds.add(u));
   }
 
-  // Add all anchored courses and their dependencies to active set
-  anchoredCourseCodes.forEach(anchorCode => {
-    activeNodeIds.add(anchorCode);
-    const anchorNode = rawGraphData[anchorCode];
-    if (anchorNode) {
-      (anchorNode.prerequisites || []).forEach(p => activeNodeIds.add(p));
-      (anchorNode.prerequisite_for || []).forEach(u => activeNodeIds.add(u));
-    }
-  });
-
   const centerPos = targetCode ? (originalNodePositions[targetCode] || network.getPosition(targetCode) || { x: 0, y: 0 }) : { x: 0, y: 0 };
   const nodeUpdates = [];
 
@@ -306,14 +367,13 @@ function highlightCoursePath(targetCode) {
           const posX = centerPos.x + radius * Math.cos(angle);
           const posY = centerPos.y + radius * Math.sin(angle);
 
-          const isAnchored = anchoredCourseCodes.has(pId);
           nodeUpdates.push({
             id: pId,
             label: pId,
             x: posX,
             y: posY,
-            color: isAnchored ? { background: COLOR_ANCHOR_GOLD, border: '#b45309' } : { background: COLOR_PREREQ_ANCESTOR, border: '#312e81' },
-            font: { color: isAnchored ? COLOR_ANCHOR_GOLD : COLOR_PREREQ_ANCESTOR, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: '#ffffff' },
+            color: { background: COLOR_PREREQ_ANCESTOR, border: '#312e81' },
+            font: { color: COLOR_PREREQ_ANCESTOR, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: '#ffffff' },
             size: Math.max(10, 16 - depth * 2),
             hidden: false
           });
@@ -329,14 +389,13 @@ function highlightCoursePath(targetCode) {
         const posX = centerPos.x + prereqRadius * Math.cos(angle);
         const posY = centerPos.y + prereqRadius * Math.sin(angle);
 
-        const isAnchored = anchoredCourseCodes.has(prereqId);
         nodeUpdates.push({
           id: prereqId,
           label: prereqId,
           x: posX,
           y: posY,
-          color: isAnchored ? { background: COLOR_ANCHOR_GOLD, border: '#b45309' } : { background: COLOR_PREREQ_ANCESTOR, border: '#312e81' },
-          font: { color: isAnchored ? COLOR_ANCHOR_GOLD : COLOR_PREREQ_ANCESTOR, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: '#ffffff' },
+          color: { background: COLOR_PREREQ_ANCESTOR, border: '#312e81' },
+          font: { color: COLOR_PREREQ_ANCESTOR, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: '#ffffff' },
           size: prereqNodeSize,
           hidden: false
         });
@@ -353,49 +412,30 @@ function highlightCoursePath(targetCode) {
       const posX = centerPos.x + unlockRadius * Math.cos(angle);
       const posY = centerPos.y + unlockRadius * Math.sin(angle);
 
-      const isAnchored = anchoredCourseCodes.has(unlockId);
       nodeUpdates.push({
         id: unlockId,
         label: unlockId,
         x: posX,
         y: posY,
-        color: isAnchored ? { background: COLOR_ANCHOR_GOLD, border: '#b45309' } : { background: COLOR_UNLOCK_DESCENDANT, border: '#0369a1' },
-        font: { color: isAnchored ? COLOR_ANCHOR_GOLD : COLOR_UNLOCK_DESCENDANT, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: '#ffffff' },
+        color: { background: COLOR_UNLOCK_DESCENDANT, border: '#0369a1' },
+        font: { color: COLOR_UNLOCK_DESCENDANT, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: '#ffffff' },
         size: unlockNodeSize,
         hidden: false
       });
     });
 
     // Selected Target Node
-    const isTargetAnchored = anchoredCourseCodes.has(targetCode);
     nodeUpdates.push({
       id: targetCode,
       label: targetCode,
       x: centerPos.x,
       y: centerPos.y,
-      color: isTargetAnchored ? { background: COLOR_ANCHOR_GOLD, border: '#b45309' } : { background: COLOR_WPI_CRIMSON, border: '#8B222C' },
-      font: { color: isTargetAnchored ? COLOR_ANCHOR_GOLD : COLOR_WPI_CRIMSON, size: 16, face: 'Inter', weight: '700', strokeWidth: 4, strokeColor: '#ffffff' },
+      color: { background: COLOR_WPI_CRIMSON, border: '#8B222C' },
+      font: { color: COLOR_WPI_CRIMSON, size: 16, face: 'Inter', weight: '700', strokeWidth: 4, strokeColor: '#ffffff' },
       size: 24,
       hidden: false
     });
   }
-
-  // Ensure all other anchored nodes maintain high visibility
-  anchoredCourseCodes.forEach(aCode => {
-    if (aCode !== targetCode) {
-      const orig = originalNodePositions[aCode] || network.getPosition(aCode);
-      nodeUpdates.push({
-        id: aCode,
-        label: aCode,
-        x: orig ? orig.x : undefined,
-        y: orig ? orig.y : undefined,
-        color: { background: COLOR_ANCHOR_GOLD, border: '#b45309' },
-        font: { color: COLOR_ANCHOR_GOLD, size: 15, face: 'Inter', weight: '700', strokeWidth: 4, strokeColor: '#ffffff' },
-        size: 20,
-        hidden: false
-      });
-    }
-  });
 
   // Inactive background nodes
   nodesDataSet.forEach(node => {
@@ -414,45 +454,37 @@ function highlightCoursePath(targetCode) {
     }
   });
 
-  // STRICT EDGE Z-LAYERING: Fade out background edges, elevate active & anchored edges
+  // STRICT EDGE FILTERING: Highlight Prereq->Target, Target->Unlock, and Prereq->Prereq chains only
+  const prereqSet = new Set(directPrereqs);
   const edgeUpdates = [];
-  const activeEdgeIds = [];
 
   edgesDataSet.forEach(edge => {
-    const isFromActive = activeNodeIds.has(edge.from);
-    const isToActive = activeNodeIds.has(edge.to);
-    const isBothActive = isFromActive && isToActive;
+    const isFromTarget = (edge.from === targetCode);
+    const isToTarget = (edge.to === targetCode);
+    const isFromPrereq = prereqSet.has(edge.from);
+    const isToPrereq = prereqSet.has(edge.to);
 
-    if (isBothActive) {
-      const isAnchorEdge = (anchoredCourseCodes.has(edge.from) || anchoredCourseCodes.has(edge.to));
+    const isHighlightEdge = (isToTarget && isFromPrereq) || isFromTarget || (isFromPrereq && isToPrereq);
+
+    if (isHighlightEdge) {
       edgeUpdates.push({
         id: edge.id,
-        color: { color: isAnchorEdge ? COLOR_ANCHOR_GOLD : COLOR_PREREQ_ANCESTOR, highlight: COLOR_WPI_CRIMSON },
-        width: 3.2
+        color: { color: isFromTarget ? COLOR_UNLOCK_DESCENDANT : COLOR_PREREQ_ANCESTOR, highlight: COLOR_WPI_CRIMSON },
+        width: 3.2,
+        hidden: false
       });
-      activeEdgeIds.push(edge.id);
     } else {
       edgeUpdates.push({
         id: edge.id,
         color: { color: 'rgba(226, 221, 211, 0.08)' },
-        width: 0.5
+        width: 0.5,
+        hidden: true
       });
     }
   });
 
   nodesDataSet.update(nodeUpdates);
   edgesDataSet.update(edgeUpdates);
-
-  // Canvas Re-insertion Hack: Re-add active nodes & active edges so they render on top
-  const activeNodes = nodeUpdates.filter(u => activeNodeIds.has(u.id));
-  nodesDataSet.remove(Array.from(activeNodeIds));
-  nodesDataSet.add(activeNodes);
-
-  if (activeEdgeIds.length > 0) {
-    const fullActiveEdgeObjs = edgesDataSet.get(activeEdgeIds);
-    edgesDataSet.remove(activeEdgeIds);
-    edgesDataSet.add(fullActiveEdgeObjs);
-  }
 
   return activeNodeIds;
 }
@@ -474,21 +506,30 @@ function restoreOriginalPositions() {
 // BATCHED OPTIMIZED CLEAR
 function clearHighlightPath() {
   restoreOriginalPositions();
+  currentSelectedCourse = null;
+  hideBadgeTooltip();
+
+  const panel = document.getElementById('details-panel');
+  if (panel) {
+    panel.innerHTML = '<p class="placeholder-msg">Click any course node in the graph to view prerequisites, unlocked courses, and details.</p>';
+  }
+
+  const currentDept = document.getElementById('dept-select') ? document.getElementById('dept-select').value : 'ALL';
+  renderDepartmentCourses(currentDept, null);
 
   const nodeUpdates = [];
   nodesDataSet.forEach(node => {
-    const isAnchored = anchoredCourseCodes.has(node.id);
     nodeUpdates.push({
       id: node.id,
       label: node.id,
-      color: isAnchored ? { background: COLOR_ANCHOR_GOLD, border: '#b45309' } : {
+      color: {
         background: COLOR_DEFAULT_NODE,
         border: COLOR_DEFAULT_BORDER,
         highlight: { background: COLOR_WPI_CRIMSON, border: COLOR_WPI_CRIMSON },
-        hover: { background: '#f8fafc', border: COLOR_WPI_CRIMSON }
+        hover: { background: COLOR_HOVER_NODE, border: COLOR_WPI_CRIMSON }
       },
-      font: { color: isAnchored ? COLOR_ANCHOR_GOLD : COLOR_DEFAULT_TEXT, size: isAnchored ? 15 : 13, face: 'Inter', weight: '600', strokeWidth: 3, strokeColor: '#ffffff' },
-      size: isAnchored ? 20 : 14,
+      font: { color: COLOR_DEFAULT_TEXT, size: 13, face: 'Inter', weight: '600', strokeWidth: 3, strokeColor: COLOR_DEFAULT_STROKE },
+      size: 14,
       hidden: false
     });
   });
@@ -497,64 +538,14 @@ function clearHighlightPath() {
   edgesDataSet.forEach(edge => {
     edgeUpdates.push({
       id: edge.id,
-      color: { color: '#cbd5e1', highlight: COLOR_WPI_CRIMSON },
-      width: 1.2
+      color: { color: COLOR_DEFAULT_EDGE, highlight: COLOR_WPI_CRIMSON },
+      width: 1.2,
+      hidden: false
     });
   });
 
   nodesDataSet.update(nodeUpdates);
   edgesDataSet.update(edgeUpdates);
-}
-
-// Toggle Course Anchor
-function toggleAnchorCourse(code) {
-  if (anchoredCourseCodes.has(code)) {
-    anchoredCourseCodes.delete(code);
-  } else {
-    anchoredCourseCodes.add(code);
-  }
-  updateAnchoredUI();
-  if (currentSelectedCourse) {
-    selectCourse(currentSelectedCourse);
-  } else {
-    selectCourse(code);
-  }
-}
-
-// Clear All Anchored Courses
-function clearAllAnchors() {
-  anchoredCourseCodes.clear();
-  updateAnchoredUI();
-  if (currentSelectedCourse) {
-    selectCourse(currentSelectedCourse);
-  } else {
-    clearHighlightPath();
-  }
-}
-
-// Update Anchored Courses Floating Control Bar UI
-function updateAnchoredUI() {
-  const container = document.getElementById('anchored-container');
-  if (!container) return;
-
-  if (anchoredCourseCodes.size === 0) {
-    container.style.display = 'none';
-    container.innerHTML = '';
-    return;
-  }
-
-  const pillsHTML = Array.from(anchoredCourseCodes).map(code => `
-    <span class="anchor-pill" onclick="toggleAnchorCourse('${code}')">
-      ⚓ ${code} &times;
-    </span>
-  `).join('');
-
-  container.innerHTML = `
-    <span>Anchored Paths:</span>
-    ${pillsHTML}
-    <button class="btn-xs" style="margin-left: 4px;" onclick="clearAllAnchors()">Clear All</button>
-  `;
-  container.style.display = 'flex';
 }
 
 // Toggle Recursive Tree Unwinder for Prerequisites
@@ -565,6 +556,12 @@ function toggleShowAllPrereqs(code) {
 
 // Select Course & Display Details with Auto-Framing
 function selectCourse(code) {
+  hideBadgeTooltip();
+
+  // Freeze physics when inspecting a single course node
+  network.setOptions({ physics: { enabled: false } });
+  network.stopSimulation();
+
   const node = rawGraphData[code];
   if (!node) return;
 
@@ -592,6 +589,11 @@ function selectCourse(code) {
   }
 
   renderCourseDetails(node);
+
+  const dept = node.department_code || node.department;
+  if (dept) {
+    renderDepartmentCourses(dept, code);
+  }
 }
 
 // HOVERABLE SIDEBAR BADGE POPOVER TOOLTIP ENGINE
@@ -644,14 +646,13 @@ function hideBadgeTooltip() {
 // Render Details Sidebar Panel with Visual OR/AND Group Rendering & Tree Unwinder
 function renderCourseDetails(node) {
   const panel = document.getElementById('details-panel');
-  const isAnchored = anchoredCourseCodes.has(node.course_code);
 
   let prereqHTML = '';
 
   if (showAllPrereqsActive) {
     const treeObj = getAllUpstreamPrereqs(node.course_code);
     if (Object.keys(treeObj.resultByTier).length > 0) {
-      const tierHTMLs = Object.entries(treeObj.resultByTier).sort((a,b) => Number(a[0]) - Number(b[0])).map(([depthStr, pCodes]) => {
+      const tierHTMLs = Object.entries(treeObj.resultByTier).sort((a, b) => Number(a[0]) - Number(b[0])).map(([depthStr, pCodes]) => {
         const depth = Number(depthStr);
         const tierLabel = (depth === 1) ? 'Tier 1 (Direct Prerequisites)' : `Tier ${depth} (Upstream Prerequisites)`;
         const badges = pCodes.map(p => `
@@ -674,33 +675,58 @@ function renderCourseDetails(node) {
       prereqHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">No upstream prerequisites.</span>';
     }
   } else if (node.prerequisites_structured && node.prerequisites_structured.length > 0) {
-    const topConnector = (node.prerequisites_structured[0] && node.prerequisites_structured[0].connector === 'OR') ? 'OR' : 'AND';
+    const reqCourses = [];
+    const orGroups = [];
 
-    const groupHTMLs = node.prerequisites_structured.map((group, idx) => {
+    node.prerequisites_structured.forEach(group => {
       const type = group.type || 'AND';
-      const isOrGroup = (type === 'OR' && group.courses.length > 1);
+      const courses = group.courses || [];
+      if (type === 'OR' && courses.length > 1) {
+        orGroups.push(courses);
+      } else {
+        courses.forEach(c => {
+          if (!reqCourses.includes(c)) reqCourses.push(c);
+        });
+      }
+    });
 
-      const badges = group.courses.map(p => `
+    const blocksHTML = [];
+
+    if (reqCourses.length > 0) {
+      const reqBadges = reqCourses.map(p => `
         <span class="badge badge-prereq" 
               onclick="selectCourse('${p}')"
               onmouseenter="showBadgeTooltip(event, '${p}')"
               onmousemove="moveBadgeTooltip(event)"
               onmouseleave="hideBadgeTooltip()">${p}</span>
-      `).join(isOrGroup ? ' <span class="or-divider-badge">OR</span> ' : ' ');
+      `).join(' ');
 
-      return `
-        <div class="prereq-group-box ${isOrGroup ? 'or-group' : 'and-group'}">
-          ${isOrGroup ? '<div class="prereq-group-title">Any One Of:</div>' : (node.prerequisites_structured.length > 1 ? '<div class="prereq-group-title req-title">Required:</div>' : '')}
+      blocksHTML.push(`
+        <div class="prereq-group-box and-group">
+          ${(orGroups.length > 0 || reqCourses.length > 1) ? '<div class="prereq-group-title req-title">Required:</div>' : ''}
+          <div class="badge-list">${reqBadges}</div>
+        </div>
+      `);
+    }
+
+    orGroups.forEach(courses => {
+      const badges = courses.map(p => `
+        <span class="badge badge-prereq" 
+              onclick="selectCourse('${p}')"
+              onmouseenter="showBadgeTooltip(event, '${p}')"
+              onmousemove="moveBadgeTooltip(event)"
+              onmouseleave="hideBadgeTooltip()">${p}</span>
+      `).join(' <span class="or-divider-badge">OR</span> ');
+
+      blocksHTML.push(`
+        <div class="prereq-group-box or-group">
+          <div class="prereq-group-title">Any One Of:</div>
           <div class="badge-list">${badges}</div>
         </div>
-      `;
+      `);
     });
 
-    const connectorHTML = (topConnector === 'OR')
-      ? '<div class="or-connector">— OR —</div>'
-      : '<div class="and-connector">— AND —</div>';
-
-    prereqHTML = groupHTMLs.join(connectorHTML);
+    prereqHTML = blocksHTML.join('');
   } else if ((node.prerequisites || []).length > 0) {
     prereqHTML = `
       <div class="badge-list">
@@ -742,10 +768,7 @@ function renderCourseDetails(node) {
   panel.innerHTML = `
     <div class="course-card-header">
       <div class="course-header-top">
-        <div class="course-code-tag ${isAnchored ? 'anchored' : ''}">${node.course_code} ${isAnchored ? '⚓' : ''}</div>
-        <button class="btn-xs btn-anchor ${isAnchored ? 'active' : ''}" onclick="toggleAnchorCourse('${node.course_code}')">
-          ${isAnchored ? '⚓ Unanchor' : '⚓ Anchor Path'}
-        </button>
+        <div class="course-code-tag">${node.course_code}</div>
       </div>
       <div class="course-title-text">${node.course_name || 'Course Title'}</div>
       <div class="meta-row">
@@ -756,10 +779,10 @@ function renderCourseDetails(node) {
 
     <div class="detail-block">
       <div class="detail-block-header">
-        <div class="detail-block-label">Prerequisites Required</div>
+        <div class="detail-block-label">Prerequisites Recommended</div>
         ${hasPrereqs ? `
           <button class="btn-xs ${showAllPrereqsActive ? 'active' : ''}" onclick="toggleShowAllPrereqs('${node.course_code}')">
-            ${showAllPrereqsActive ? 'Collapse Tree' : 'Show All (Tree)'}
+            ${showAllPrereqsActive ? 'Collapse Tree' : 'Show All (Unwind)'}
           </button>
         ` : ''}
       </div>
@@ -805,36 +828,154 @@ function populateDepartmentSelect(graphData) {
   });
 }
 
-// Render Department Legend
-function renderLegend(graphData) {
-  const grid = document.getElementById('legend-grid');
-  const depts = Array.from(new Set(Object.values(graphData).map(n => n.department_code || 'OTHER'))).sort();
+function extractCourseSortWeight(code) {
+  const parts = (code || '').trim().split(/\s+/);
+  const numToken = parts[1] || parts[0] || '';
+  const match = numToken.match(/\d+/);
+  if (!match) return 999999;
 
-  grid.innerHTML = depts.map(d => `
-    <div class="legend-item" onclick="filterDepartment('${d}')">
-      <span class="legend-dot"></span>
-      <span>${d}</span>
-    </div>
-  `).join('');
+  const digits = match[0];
+  const num = parseInt(digits, 10);
+
+  if (numToken.length >= 4) {
+    if (digits.length === 3) {
+      return num * 10 + 5;
+    }
+    return num;
+  }
+
+  if (numToken.length === 3) {
+    return 10000 + num;
+  }
+
+  return 20000 + num;
 }
 
-// FILTER DEPARTMENT WITH DYNAMIC AUTO-FIT & AUTO-CENTERING
+// Render Scrollable Department Courses Directory
+function renderDepartmentCourses(deptCode, activeCourseCode) {
+  const titleEl = document.getElementById('dept-courses-title');
+  const container = document.getElementById('dept-courses-list');
+  const showAllBtn = document.getElementById('dept-show-all-btn');
+
+  if (!container) return;
+
+  if (!deptCode || deptCode === 'ALL') {
+    if (titleEl) titleEl.textContent = 'Department Courses';
+    if (showAllBtn) showAllBtn.style.display = 'none';
+    container.innerHTML = '<p class="placeholder-msg">Select a department or click a course to view all courses in that department.</p>';
+    return;
+  }
+
+  if (showAllBtn) {
+    showAllBtn.style.display = 'inline-flex';
+    showAllBtn.onclick = () => filterDepartment(deptCode);
+  }
+
+  const deptCourses = Object.values(rawGraphData).filter(c => {
+    const dept = c.department_code || c.department || '';
+    return dept === deptCode;
+  });
+
+  deptCourses.sort((a, b) => {
+    const codeA = a.course_code || a.id || '';
+    const codeB = b.course_code || b.id || '';
+    const weightA = extractCourseSortWeight(codeA);
+    const weightB = extractCourseSortWeight(codeB);
+    if (weightA !== weightB) return weightA - weightB;
+    return codeA.localeCompare(codeB);
+  });
+
+  if (titleEl) {
+    titleEl.textContent = `${deptCode} Dept (${deptCourses.length})`;
+  }
+
+  if (deptCourses.length === 0) {
+    container.innerHTML = '<p class="placeholder-msg">No courses found in this department.</p>';
+    return;
+  }
+
+  container.innerHTML = deptCourses.map(c => {
+    const code = c.course_code || c.id;
+    const name = c.course_name || c.name || '';
+    const isActive = (code === activeCourseCode);
+
+    return `
+      <div class="dept-course-item ${isActive ? 'active' : ''}" data-code="${code}" onclick="selectCourse('${code}')">
+        <span class="dept-course-code">${code}</span>
+        <span class="dept-course-title" title="${name}">${name}</span>
+      </div>
+    `;
+  }).join('');
+
+  if (activeCourseCode) {
+    const activeEl = container.querySelector(`.dept-course-item[data-code="${activeCourseCode}"]`);
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+// FILTER DEPARTMENT WITH DYNAMIC AUTO-FIT, TIGHT CLUSTERING & AUTO-CENTERING
 function filterDepartment(dept) {
+  hideBadgeTooltip();
   document.getElementById('dept-select').value = dept;
+  renderDepartmentCourses(dept, null);
   const updates = [];
   const visibleNodeIds = [];
 
   if (dept === 'ALL') {
+    restoreOriginalPositions();
     nodesDataSet.forEach(n => {
       updates.push({ id: n.id, hidden: false });
       visibleNodeIds.push(n.id);
     });
   } else {
+    const deptNodeIds = [];
     nodesDataSet.forEach(n => {
       const isVisible = (n.department === dept);
       updates.push({ id: n.id, hidden: !isVisible });
-      if (isVisible) visibleNodeIds.push(n.id);
+      if (isVisible) {
+        visibleNodeIds.push(n.id);
+        deptNodeIds.push(n.id);
+      }
     });
+
+    let sumX = 0, sumY = 0, count = 0;
+    deptNodeIds.forEach(id => {
+      const pos = originalNodePositions[id] || network.getPosition(id);
+      if (pos) {
+        sumX += pos.x;
+        sumY += pos.y;
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      const avgX = sumX / count;
+      const avgY = sumY / count;
+
+      const connectedNodeIds = new Set();
+      edgesDataSet.forEach(e => {
+        if (!e.hidden) {
+          connectedNodeIds.add(e.from);
+          connectedNodeIds.add(e.to);
+        }
+      });
+
+      deptNodeIds.forEach(id => {
+        const pos = originalNodePositions[id] || network.getPosition(id);
+        if (pos) {
+          const isConnected = connectedNodeIds.has(id);
+          const factor = isConnected ? 0.28 : 0.12;
+          updates.push({
+            id: id,
+            hidden: false,
+            x: avgX + (pos.x - avgX) * factor,
+            y: avgY + (pos.y - avgY) * factor
+          });
+        }
+      });
+    }
   }
 
   nodesDataSet.update(updates);
@@ -848,7 +989,45 @@ function filterDepartment(dept) {
           easingFunction: 'easeInOutQuad'
         }
       });
+
+      if (dept !== 'ALL') {
+        setTimeout(() => {
+          const currentScale = network.getScale();
+          if (currentScale < 0.8) {
+            const pos = network.getViewPosition();
+            network.moveTo({
+              position: pos,
+              scale: 0.85,
+              animation: { duration: 300, easingFunction: 'easeInOutQuad' }
+            });
+          }
+        }, 420);
+      }
     }, 50);
+  }
+
+  // Manage physics state for department courses with tighter springs
+  if (isPhysicsEnabled) {
+    const cfg = (dept && dept !== 'ALL') ? PHYSICS_CONFIG.department : PHYSICS_CONFIG.full;
+    network.setOptions({
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: cfg.gravitationalConstant,
+          centralGravity: cfg.centralGravity,
+          springLength: cfg.springLength,
+          springConstant: cfg.springConstant,
+          damping: cfg.damping,
+          avoidOverlap: cfg.avoidOverlap || 0.8
+        },
+        stabilization: { enabled: false }
+      }
+    });
+    network.startSimulation();
+  } else {
+    network.setOptions({ physics: { enabled: false } });
+    network.stopSimulation();
   }
 }
 
@@ -940,14 +1119,78 @@ function updateSearchHighlight(items) {
 
 // Reset View
 function resetView() {
+  hideBadgeTooltip();
   document.getElementById('search-input').value = '';
   document.getElementById('dept-select').value = 'ALL';
   const dropdown = document.getElementById('search-dropdown');
   if (dropdown) dropdown.style.display = 'none';
   filterDepartment('ALL');
-  clearAllAnchors();
   clearHighlightPath();
   network.fit({ animation: { duration: 300, easingFunction: 'easeInOutQuad' } });
+}
+
+// Help Modal Controls
+function openHelpModal() {
+  const overlay = document.getElementById('help-modal-overlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+function closeHelpModal() {
+  const overlay = document.getElementById('help-modal-overlay');
+  if (overlay) overlay.classList.remove('active');
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target && e.target.id === 'help-modal-overlay') {
+    closeHelpModal();
+  }
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    closeHelpModal();
+  }
+});
+
+// Toggle Live Graph Physics
+function togglePhysics() {
+  isPhysicsEnabled = !isPhysicsEnabled;
+  const btn = document.getElementById('physics-toggle-btn');
+
+  if (isPhysicsEnabled) {
+    if (btn) {
+      btn.textContent = 'Physics: ON';
+      btn.classList.add('active');
+    }
+    const currentDept = document.getElementById('dept-select') ? document.getElementById('dept-select').value : 'ALL';
+    const cfg = (currentDept && currentDept !== 'ALL') ? PHYSICS_CONFIG.department : PHYSICS_CONFIG.full;
+
+    network.setOptions({
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: cfg.gravitationalConstant,
+          centralGravity: cfg.centralGravity,
+          springLength: cfg.springLength,
+          springConstant: cfg.springConstant,
+          damping: cfg.damping,
+          avoidOverlap: cfg.avoidOverlap || 0.8
+        },
+        stabilization: { enabled: false }
+      }
+    });
+    network.startSimulation();
+  } else {
+    if (btn) {
+      btn.textContent = 'Physics: OFF';
+      btn.classList.remove('active');
+    }
+    network.setOptions({
+      physics: { enabled: false }
+    });
+    network.stopSimulation();
+  }
 }
 
 // Initialize on DOM Load
