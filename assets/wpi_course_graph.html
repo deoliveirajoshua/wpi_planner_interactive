@@ -858,7 +858,7 @@ body {
           <option value="ALL">All Departments</option>
           <option value="AB">AB</option><option value="ACC">ACC</option><option value="AE">AE</option><option value="AR">AR</option><option value="ARCH">ARCH</option><option value="AREN">AREN</option><option value="AS">AS</option><option value="BB">BB</option><option value="BCB">BCB</option><option value="BME">BME</option><option value="BUS">BUS</option><option value="CE">CE</option><option value="CH">CH</option><option value="CHE">CHE</option><option value="CN">CN</option><option value="CS">CS</option><option value="DEV">DEV</option><option value="DS">DS</option><option value="ECE">ECE</option><option value="ECON">ECON</option><option value="EDU">EDU</option><option value="EN">EN</option><option value="ENV">ENV</option><option value="ES">ES</option><option value="ESL">ESL</option><option value="ETR">ETR</option><option value="FIN">FIN</option><option value="FP">FP</option><option value="FY">FY</option><option value="GE">GE</option><option value="GN">GN</option><option value="GOV">GOV</option><option value="HI">HI</option><option value="HU">HU</option><option value="ID">ID</option><option value="IDG">IDG</option><option value="IGS">IGS</option><option value="IMGD">IMGD</option><option value="INTL">INTL</option><option value="ISE">ISE</option><option value="MA">MA</option><option value="ME">ME</option><option value="MFE">MFE</option><option value="MIS">MIS</option><option value="MKT">MKT</option><option value="ML">ML</option><option value="MME">MME</option><option value="MTE">MTE</option><option value="MU">MU</option><option value="NEU">NEU</option><option value="NSE">NSE</option><option value="OBC">OBC</option><option value="OIE">OIE</option><option value="PH">PH</option><option value="PSY">PSY</option><option value="PY">PY</option><option value="RBE">RBE</option><option value="RE">RE</option><option value="SD">SD</option><option value="SP">SP</option><option value="SS">SS</option><option value="STS">STS</option><option value="SYS">SYS</option><option value="TH">TH</option><option value="WPE">WPE</option><option value="WR">WR</option>
         </select>
-        <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
+        <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Animation: OFF</button>
         <button class="btn" onclick="resetView()">Reset View</button>
         <button class="btn" onclick="openHelpModal()">Help</button>
       </div>
@@ -915,7 +915,7 @@ body {
             <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
             <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <strong>Show All</strong> in the sidebar to cluster and zoom into department courses.</li>
             <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.</li>
-            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
+            <li><strong>Animation Toggle:</strong> Click <strong>Animation: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
           </ul>
         </div>
         <div class="modal-section">
@@ -48759,7 +48759,9 @@ function setupNetwork(graphData) {
       tooltipDelay: 100,
       navigationButtons: false,
       dragView: false,
-      zoomView: true
+      zoomView: true,
+      selectConnectedEdges: false,
+      hoverConnectedEdges: false
     }
   };
 
@@ -49298,6 +49300,15 @@ function clearHighlightPath() {
 
 // Network Event Click Handlers
 function handleNetworkSingleClick(params) {
+  if ((!params.nodes || params.nodes.length === 0) && (params.edges && params.edges.length > 0)) {
+    if (currentSelectedCourse) {
+      network.selectNodes([currentSelectedCourse]);
+    } else {
+      network.unselect();
+    }
+    return;
+  }
+
   const clickedNode = (params.nodes && params.nodes.length > 0) ? params.nodes[0] : null;
 
   if (clickedNode) {
@@ -49320,6 +49331,15 @@ function handleNetworkSingleClick(params) {
 }
 
 function handleNetworkDoubleClick(params) {
+  if ((!params.nodes || params.nodes.length === 0) && (params.edges && params.edges.length > 0)) {
+    if (currentSelectedCourse) {
+      network.selectNodes([currentSelectedCourse]);
+    } else {
+      network.unselect();
+    }
+    return;
+  }
+
   const clickedNode = (params.nodes && params.nodes.length > 0) ? params.nodes[0] : null;
 
   if (clickedNode) {
@@ -49917,7 +49937,7 @@ function togglePhysics() {
 
   if (isPhysicsEnabled) {
     if (btn) {
-      btn.textContent = 'Physics: ON';
+      btn.textContent = 'Animation: ON';
       btn.classList.add('active');
     }
     const currentDept = document.getElementById('dept-select') ? document.getElementById('dept-select').value : 'ALL';
@@ -49941,7 +49961,7 @@ function togglePhysics() {
     network.startSimulation();
   } else {
     if (btn) {
-      btn.textContent = 'Physics: OFF';
+      btn.textContent = 'Animation: OFF';
       btn.classList.remove('active');
     }
     network.setOptions({

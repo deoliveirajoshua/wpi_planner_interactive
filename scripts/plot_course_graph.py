@@ -125,7 +125,7 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
           <option value="ALL">All Departments</option>
           {dept_options_html}
         </select>
-        <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Physics: OFF</button>
+        <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Animation: OFF</button>
         <button class="btn" onclick="resetView()">Reset View</button>
         <button class="btn" onclick="openHelpModal()">Help</button>
       </div>
@@ -182,7 +182,7 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
             <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
             <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <strong>Show All</strong> in the sidebar to cluster and zoom into department courses.</li>
             <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.</li>
-            <li><strong>Physics Toggle:</strong> Click <strong>Physics: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
+            <li><strong>Animation Toggle:</strong> Click <strong>Animation: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
           </ul>
         </div>
         <div class="modal-section">

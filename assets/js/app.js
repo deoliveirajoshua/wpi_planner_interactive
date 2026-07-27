@@ -219,7 +219,9 @@ function setupNetwork(graphData) {
       tooltipDelay: 100,
       navigationButtons: false,
       dragView: false,
-      zoomView: true
+      zoomView: true,
+      selectConnectedEdges: false,
+      hoverConnectedEdges: false
     }
   };
 
@@ -758,6 +760,15 @@ function clearHighlightPath() {
 
 // Network Event Click Handlers
 function handleNetworkSingleClick(params) {
+  if ((!params.nodes || params.nodes.length === 0) && (params.edges && params.edges.length > 0)) {
+    if (currentSelectedCourse) {
+      network.selectNodes([currentSelectedCourse]);
+    } else {
+      network.unselect();
+    }
+    return;
+  }
+
   const clickedNode = (params.nodes && params.nodes.length > 0) ? params.nodes[0] : null;
 
   if (clickedNode) {
@@ -780,6 +791,15 @@ function handleNetworkSingleClick(params) {
 }
 
 function handleNetworkDoubleClick(params) {
+  if ((!params.nodes || params.nodes.length === 0) && (params.edges && params.edges.length > 0)) {
+    if (currentSelectedCourse) {
+      network.selectNodes([currentSelectedCourse]);
+    } else {
+      network.unselect();
+    }
+    return;
+  }
+
   const clickedNode = (params.nodes && params.nodes.length > 0) ? params.nodes[0] : null;
 
   if (clickedNode) {
@@ -1377,7 +1397,7 @@ function togglePhysics() {
 
   if (isPhysicsEnabled) {
     if (btn) {
-      btn.textContent = 'Physics: ON';
+      btn.textContent = 'Animation: ON';
       btn.classList.add('active');
     }
     const currentDept = document.getElementById('dept-select') ? document.getElementById('dept-select').value : 'ALL';
@@ -1401,7 +1421,7 @@ function togglePhysics() {
     network.startSimulation();
   } else {
     if (btn) {
-      btn.textContent = 'Physics: OFF';
+      btn.textContent = 'Animation: OFF';
       btn.classList.remove('active');
     }
     network.setOptions({
