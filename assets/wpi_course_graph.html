@@ -48545,6 +48545,8 @@ let currentSearchMatches = [];
 let currentSelectedCourse = null;
 let showAllPrereqsActive = false;
 let isPhysicsEnabled = false;
+let selectionMode = 'none'; // 'none' | 'highlight' | 'isolated'
+let netClickTimer = null;
 
 // ============================================================================
 // CENTRAL PHYSICS CONFIGURATION
@@ -48803,14 +48805,24 @@ function setupNetwork(graphData) {
     });
   });
 
-  // Left-Click: Select Course
+  // Single-Click & Double-Click Dispatchers
   network.on('click', function (params) {
-    if (params.nodes.length > 0) {
-      const code = params.nodes[0];
-      selectCourse(code);
-    } else {
-      clearHighlightPath();
+    if (netClickTimer) {
+      clearTimeout(netClickTimer);
+      netClickTimer = null;
     }
+    netClickTimer = setTimeout(() => {
+      netClickTimer = null;
+      handleNetworkSingleClick(params);
+    }, 220);
+  });
+
+  network.on('doubleClick', function (params) {
+    if (netClickTimer) {
+      clearTimeout(netClickTimer);
+      netClickTimer = null;
+    }
+    handleNetworkDoubleClick(params);
   });
 }
 
@@ -49031,8 +49043,167 @@ function restoreOriginalPositions() {
   }
 }
 
+// FULL MAIN VIEW HIGHLIGHT (Keeps background nodes visible)
+function highlightCoursePathFullView(targetCode) {
+  selectionMode = 'highlight';
+  currentSelectedCourse = targetCode;
+  restoreOriginalPositions();
+  hideBadgeTooltip();
+
+  const node = rawGraphData[targetCode];
+  if (!node) return;
+
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.value = targetCode;
+
+  const dropdown = document.getElementById('search-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+
+  const activeNodeIds = new Set([targetCode]);
+  let directPrereqs = [];
+  let recursivePrereqObj = null;
+
+  if (showAllPrereqsActive) {
+    recursivePrereqObj = getAllUpstreamPrereqs(targetCode);
+    directPrereqs = recursivePrereqObj.allPrereqIds;
+  } else {
+    directPrereqs = Array.from(new Set(node.prerequisites || []));
+  }
+
+  const directUnlocks = Array.from(new Set(node.prerequisite_for || []));
+  const prereqSet = new Set(directPrereqs);
+  const unlockSet = new Set(directUnlocks);
+
+  prereqSet.forEach(p => activeNodeIds.add(p));
+  unlockSet.forEach(u => activeNodeIds.add(u));
+
+  const nodeUpdates = [];
+  nodesDataSet.forEach(n => {
+    if (n.id === targetCode) {
+      nodeUpdates.push({
+        id: n.id,
+        label: n.id,
+        color: { background: COLOR_WPI_CRIMSON, border: '#8B222C' },
+        font: { color: COLOR_WPI_CRIMSON, size: 16, face: 'Inter', weight: '700', strokeWidth: 4, strokeColor: COLOR_DEFAULT_STROKE },
+        size: 22,
+        hidden: false
+      });
+    } else if (prereqSet.has(n.id)) {
+      nodeUpdates.push({
+        id: n.id,
+        label: n.id,
+        color: { background: COLOR_PREREQ_ANCESTOR, border: '#312e81' },
+        font: { color: COLOR_PREREQ_ANCESTOR, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: COLOR_DEFAULT_STROKE },
+        size: 16,
+        hidden: false
+      });
+    } else if (unlockSet.has(n.id)) {
+      nodeUpdates.push({
+        id: n.id,
+        label: n.id,
+        color: { background: COLOR_UNLOCK_DESCENDANT, border: '#0369a1' },
+        font: { color: COLOR_UNLOCK_DESCENDANT, size: 14, face: 'Inter', weight: '700', strokeWidth: 3, strokeColor: COLOR_DEFAULT_STROKE },
+        size: 16,
+        hidden: false
+      });
+    } else {
+      nodeUpdates.push({
+        id: n.id,
+        label: n.id,
+        color: {
+          background: COLOR_DEFAULT_NODE,
+          border: COLOR_DEFAULT_BORDER,
+          highlight: { background: COLOR_WPI_CRIMSON, border: COLOR_WPI_CRIMSON },
+          hover: { background: COLOR_HOVER_NODE, border: COLOR_WPI_CRIMSON }
+        },
+        font: { color: COLOR_DEFAULT_TEXT, size: 13, face: 'Inter', weight: '600', strokeWidth: 3, strokeColor: COLOR_DEFAULT_STROKE },
+        size: 14,
+        hidden: false
+      });
+    }
+  });
+
+  const edgeUpdates = [];
+  edgesDataSet.forEach(edge => {
+    const isFromTarget = (edge.from === targetCode);
+    const isToTarget = (edge.to === targetCode);
+    const isFromPrereq = prereqSet.has(edge.from);
+    const isToPrereq = prereqSet.has(edge.to);
+    const isHighlightEdge = (isToTarget && isFromPrereq) || isFromTarget || (isFromPrereq && isToPrereq);
+
+    if (isHighlightEdge) {
+      edgeUpdates.push({
+        id: edge.id,
+        color: { color: isFromTarget ? COLOR_UNLOCK_DESCENDANT : COLOR_PREREQ_ANCESTOR, highlight: COLOR_WPI_CRIMSON },
+        width: 3.2,
+        hidden: false
+      });
+    } else {
+      edgeUpdates.push({
+        id: edge.id,
+        color: { color: 'rgba(212, 206, 184, 0.35)' },
+        width: 0.8,
+        hidden: false
+      });
+    }
+  });
+
+  nodesDataSet.update(nodeUpdates);
+  edgesDataSet.update(edgeUpdates);
+
+  renderCourseDetails(node);
+  const dept = node.department_code || node.department;
+  if (dept) {
+    renderDepartmentCourses(dept, targetCode);
+  }
+}
+
+// ISOLATED FOCUSED VIEW (Hides background nodes)
+function highlightCoursePathIsolated(targetCode) {
+  selectionMode = 'isolated';
+  hideBadgeTooltip();
+
+  // Freeze physics when inspecting a single course node in isolated view
+  network.setOptions({ physics: { enabled: false } });
+  network.stopSimulation();
+
+  const node = rawGraphData[targetCode];
+  if (!node) return;
+
+  if (currentSelectedCourse !== targetCode) {
+    showAllPrereqsActive = false;
+  }
+
+  currentSelectedCourse = targetCode;
+
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.value = targetCode;
+
+  const dropdown = document.getElementById('search-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+
+  const activeNodeIds = highlightCoursePath(targetCode);
+
+  if (activeNodeIds && activeNodeIds.size > 0) {
+    network.fit({
+      nodes: Array.from(activeNodeIds),
+      animation: { duration: 350, easingFunction: 'easeInOutQuad' }
+    });
+  } else {
+    network.focus(targetCode, { scale: 1.1, animation: { duration: 350, easingFunction: 'easeInOutQuad' } });
+  }
+
+  renderCourseDetails(node);
+
+  const dept = node.department_code || node.department;
+  if (dept) {
+    renderDepartmentCourses(dept, targetCode);
+  }
+}
+
 // BATCHED OPTIMIZED CLEAR
 function clearHighlightPath() {
+  selectionMode = 'none';
   restoreOriginalPositions();
   currentSelectedCourse = null;
   hideBadgeTooltip();
@@ -49041,6 +49212,9 @@ function clearHighlightPath() {
   if (panel) {
     panel.innerHTML = '<p class="placeholder-msg">Click any course node in the graph to view prerequisites, unlocked courses, and details.</p>';
   }
+
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.value = '';
 
   const currentDept = document.getElementById('dept-select') ? document.getElementById('dept-select').value : 'ALL';
   renderDepartmentCourses(currentDept, null);
@@ -49076,51 +49250,55 @@ function clearHighlightPath() {
   edgesDataSet.update(edgeUpdates);
 }
 
+// Network Event Click Handlers
+function handleNetworkSingleClick(params) {
+  const clickedNode = (params.nodes && params.nodes.length > 0) ? params.nodes[0] : null;
+
+  if (clickedNode) {
+    if (selectionMode === 'highlight' && currentSelectedCourse === clickedNode) {
+      clearHighlightPath();
+    } else if (selectionMode === 'isolated' && currentSelectedCourse === clickedNode) {
+      highlightCoursePathFullView(clickedNode);
+    } else if (selectionMode === 'isolated') {
+      highlightCoursePathIsolated(clickedNode);
+    } else {
+      highlightCoursePathFullView(clickedNode);
+    }
+  } else {
+    if (selectionMode === 'isolated' && currentSelectedCourse) {
+      highlightCoursePathFullView(currentSelectedCourse);
+    } else {
+      clearHighlightPath();
+    }
+  }
+}
+
+function handleNetworkDoubleClick(params) {
+  const clickedNode = (params.nodes && params.nodes.length > 0) ? params.nodes[0] : null;
+
+  if (clickedNode) {
+    highlightCoursePathIsolated(clickedNode);
+  } else {
+    if (selectionMode === 'isolated' && currentSelectedCourse) {
+      highlightCoursePathFullView(currentSelectedCourse);
+    } else {
+      clearHighlightPath();
+    }
+  }
+}
+
 // Toggle Recursive Tree Unwinder for Prerequisites
 function toggleShowAllPrereqs(code) {
   showAllPrereqsActive = !showAllPrereqsActive;
   selectCourse(code);
 }
 
-// Select Course & Display Details with Auto-Framing
+// Select Course Routing
 function selectCourse(code) {
-  hideBadgeTooltip();
-
-  // Freeze physics when inspecting a single course node
-  network.setOptions({ physics: { enabled: false } });
-  network.stopSimulation();
-
-  const node = rawGraphData[code];
-  if (!node) return;
-
-  if (currentSelectedCourse !== code) {
-    showAllPrereqsActive = false; // Reset unwinder on new course selection
-  }
-
-  currentSelectedCourse = code;
-
-  const searchInput = document.getElementById('search-input');
-  if (searchInput) searchInput.value = code;
-
-  const dropdown = document.getElementById('search-dropdown');
-  if (dropdown) dropdown.style.display = 'none';
-
-  const activeNodeIds = highlightCoursePath(code);
-
-  if (activeNodeIds && activeNodeIds.size > 0) {
-    network.fit({
-      nodes: Array.from(activeNodeIds),
-      animation: { duration: 350, easingFunction: 'easeInOutQuad' }
-    });
+  if (selectionMode === 'isolated') {
+    highlightCoursePathIsolated(code);
   } else {
-    network.focus(code, { scale: 1.1, animation: { duration: 350, easingFunction: 'easeInOutQuad' } });
-  }
-
-  renderCourseDetails(node);
-
-  const dept = node.department_code || node.department;
-  if (dept) {
-    renderDepartmentCourses(dept, code);
+    highlightCoursePathFullView(code);
   }
 }
 
