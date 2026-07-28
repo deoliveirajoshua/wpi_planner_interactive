@@ -186,12 +186,16 @@ def build_course_graph(courses: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any
             "course_number": c.get("course_number", ""),
             "min_credits": c.get("min_credits", ""),
             "max_credits": c.get("max_credits", ""),
+            "academic_year": c.get("academic_year", "2026 - 2027 Academic Year"),
+            "terms": c.get("terms", []),
             "prerequisites": prereq_codes,
             "prerequisites_structured": prereq_struct,
             "raw_prerequisite_text": prereq_raw,
             "aliases": alias_codes,
             "raw_alias_text": alias_raw
         }
+
+    dept_names = {c["department_code"]: c["department_name"] for c in courses if c.get("department_code") and c.get("department_name")}
 
     for code, node in list(graph.items()):
         for alias_code in node["aliases"]:
@@ -203,10 +207,12 @@ def build_course_graph(courses: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any
                     "course_code": alias_code,
                     "course_name": f"Course {alias_code}",
                     "department_code": dept,
-                    "department_name": "",
+                    "department_name": dept_names.get(dept, ""),
                     "course_number": num,
                     "min_credits": "",
                     "max_credits": "",
+                    "academic_year": node.get("academic_year", "2026 - 2027 Academic Year"),
+                    "terms": [],
                     "prerequisites": [],
                     "prerequisites_structured": [],
                     "raw_prerequisite_text": "",

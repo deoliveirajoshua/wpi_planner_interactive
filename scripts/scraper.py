@@ -14,7 +14,7 @@ import os
 import re
 import sys
 import urllib.request
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 PLANNER_SCHEDB_URL = "https://planner.wpi.edu/new.schedb"
 WORKDAY_JSON_URL = "https://courselistings.wpi.edu/assets/prod-data.json"
@@ -51,9 +51,17 @@ def fetch_data(url: str, timeout: int = 30) -> bytes:
         return response.read()
 
 
-def parse_schedb_xml(xml_bytes: bytes, clean_html: bool = True) -> List[Dict[str, str]]:
+DEFAULT_ACADEMIC_YEAR = "2026 - 2027 Academic Year"
+
+
+def parse_schedb_xml(
+    xml_bytes: bytes,
+    clean_html: bool = True,
+    academic_year: str = DEFAULT_ACADEMIC_YEAR
+) -> List[Dict[str, Any]]:
     """
-    Parse WPI Planner's schedb XML format into structured course records.
+    Parse WPI Planner's schedb XML format into structured course records,
+    including academic year and terms offered (A, B, C, D).
     """
     import xml.etree.ElementTree as ET
 
@@ -79,6 +87,22 @@ def parse_schedb_xml(xml_bytes: bytes, clean_html: bool = True) -> List[Dict[str
 
             description = clean_text(desc_raw) if clean_html else desc_raw
 
+            # Extract terms offered from sections
+            terms_set = set()
+            for sec in course_elem.findall("section"):
+                pot = sec.attrib.get("part-of-term", "").strip()
+                for t in ["A", "B", "C", "D"]:
+                    if f"{t} Term" in pot:
+                        terms_set.add(t)
+
+                sec_num = sec.attrib.get("number", "").strip()
+                if sec_num:
+                    m = re.match(r"^(?:[A-Z]{0,2})?([ABCD])\d", sec_num)
+                    if m:
+                        terms_set.add(m.group(1))
+
+            sorted_terms = sorted(list(terms_set))
+
             courses.append({
                 "course_code": code,
                 "department_code": dept_abbrev,
@@ -87,19 +111,27 @@ def parse_schedb_xml(xml_bytes: bytes, clean_html: bool = True) -> List[Dict[str
                 "course_name": name,
                 "course_description": description,
                 "min_credits": min_credits,
-                "max_credits": max_credits
+                "max_credits": max_credits,
+                "academic_year": academic_year,
+                "terms": sorted_terms
             })
 
     return courses
 
 
-def parse_workday_json(json_bytes: bytes, clean_html: bool = True) -> List[Dict[str, str]]:
+def parse_workday_json(
+    json_bytes: bytes,
+    clean_html: bool = True,
+    academic_year: str = DEFAULT_ACADEMIC_YEAR
+) -> List[Dict[str, Any]]:
     """
-    Parse WPI Course Listings Workday JSON format into structured course records.
+    Parse WPI Course Listings Workday JSON format into structured course records,
+    including academic year and terms offered (A, B, C, D).
     """
     data = json.loads(json_bytes.decode("utf-8"))
     entries = data.get("Report_Entry", [])
     courses_dict = {}
+    terms_dict = {}
 
     for entry in entries:
         title = entry.get("Course_Title", "").strip()
@@ -120,6 +152,14 @@ def parse_workday_json(json_bytes: bytes, clean_html: bool = True) -> List[Dict[
 
         description = clean_text(desc_raw) if clean_html else desc_raw
 
+        # Extract terms offered from offering period / section details
+        offering_period = entry.get("Offering_Period", "") + " " + entry.get("Starting_Academic_Period_Type", "")
+        if code not in terms_dict:
+            terms_dict[code] = set()
+        for t in ["A", "B", "C", "D"]:
+            if f"{t} Term" in offering_period:
+                terms_dict[code].add(t)
+
         if code not in courses_dict or (not courses_dict[code]["course_description"] and description):
             parts = code.split(" ", 1)
             dept_abbrev = parts[0] if len(parts) > 0 else ""
@@ -133,13 +173,23 @@ def parse_workday_json(json_bytes: bytes, clean_html: bool = True) -> List[Dict[
                 "course_name": name,
                 "course_description": description,
                 "academic_level": academic_level,
-                "credits": credits
+                "credits": credits,
+                "academic_year": academic_year,
+                "terms": []
             }
+
+    for code, course in courses_dict.items():
+        course["terms"] = sorted(list(terms_dict.get(code, set())))
 
     return list(courses_dict.values())
 
 
-def scrape_courses(source: str = "planner", clean_html: bool = True, verbose: bool = False) -> List[Dict[str, str]]:
+def scrape_courses(
+    source: str = "planner",
+    clean_html: bool = True,
+    academic_year: str = DEFAULT_ACADEMIC_YEAR,
+    verbose: bool = False
+) -> List[Dict[str, Any]]:
     """
     Scrape WPI course records from the specified data source ('planner' or 'workday').
     """
@@ -149,19 +199,19 @@ def scrape_courses(source: str = "planner", clean_html: bool = True, verbose: bo
         raw_bytes = fetch_data(PLANNER_SCHEDB_URL)
         if verbose:
             print("Parsing XML course records...")
-        return parse_schedb_xml(raw_bytes, clean_html=clean_html)
+        return parse_schedb_xml(raw_bytes, clean_html=clean_html, academic_year=academic_year)
     elif source in ("workday", "courselistings"):
         if verbose:
             print(f"Fetching Workday course listings JSON from {WORKDAY_JSON_URL}...")
         raw_bytes = fetch_data(WORKDAY_JSON_URL)
         if verbose:
             print("Parsing JSON course records...")
-        return parse_workday_json(raw_bytes, clean_html=clean_html)
+        return parse_workday_json(raw_bytes, clean_html=clean_html, academic_year=academic_year)
     else:
         raise ValueError(f"Unknown source: '{source}'. Choose 'planner' or 'workday'.")
 
 
-def export_courses(courses: List[Dict[str, str]], filepath: str, fmt: str = "json") -> None:
+def export_courses(courses: List[Dict[str, Any]], filepath: str, fmt: str = "json") -> None:
     """
     Export scraped course list to JSON or CSV file.
     Creates parent directories if necessary.
@@ -177,11 +227,18 @@ def export_courses(courses: List[Dict[str, str]], filepath: str, fmt: str = "jso
     elif fmt == "csv":
         if not courses:
             return
-        fieldnames = list(courses[0].keys())
+        # Convert lists to comma-separated strings for CSV format
+        flat_courses = []
+        for c in courses:
+            flat_c = dict(c)
+            if isinstance(flat_c.get("terms"), list):
+                flat_c["terms"] = ",".join(flat_c["terms"])
+            flat_courses.append(flat_c)
+        fieldnames = list(flat_courses[0].keys())
         with open(filepath, "w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(courses)
+            writer.writerows(flat_courses)
     else:
         raise ValueError(f"Unsupported format: '{fmt}'. Choose 'json' or 'csv'.")
 
@@ -189,7 +246,7 @@ def export_courses(courses: List[Dict[str, str]], filepath: str, fmt: str = "jso
 def main():
     default_output = os.path.join("data", "wpi_courses.json")
     parser = argparse.ArgumentParser(
-        description="Scrape course codes, names, and descriptions from planner.wpi.edu"
+        description="Scrape course codes, names, descriptions, academic year, and terms from planner.wpi.edu"
     )
     parser.add_argument(
         "-o", "--output",
@@ -210,6 +267,12 @@ def main():
         choices=["planner", "workday"],
         default="planner",
         help="Data source: 'planner' (planner.wpi.edu XML) or 'workday' (courselistings JSON)"
+    )
+    parser.add_argument(
+        "-y", "--academic-year",
+        type=str,
+        default=DEFAULT_ACADEMIC_YEAR,
+        help=f"Academic year string (default: '{DEFAULT_ACADEMIC_YEAR}')"
     )
     parser.add_argument(
         "--raw-html",
@@ -235,12 +298,13 @@ def main():
         courses = scrape_courses(
             source=args.source,
             clean_html=not args.raw_html,
+            academic_year=args.academic_year,
             verbose=args.verbose
         )
         export_courses(courses, args.output, fmt=fmt)
 
         if args.verbose or True:
-            print(f"Successfully scraped {len(courses)} courses from WPI {args.source.capitalize()}.")
+            print(f"Successfully scraped {len(courses)} courses from WPI {args.source.capitalize()} ({args.academic_year}).")
             print(f"Saved dataset to {args.output} ({fmt.upper()} format).")
 
     except Exception as err:
@@ -250,3 +314,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -21,8 +21,13 @@ from scraper import (
 SAMPLE_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
 <schedb generated="1:30 PM Jul 26, 2026">
   <dept abbrev="CS" name="Computer Science">
-    <course number="1101" name="Introduction To Program Design" course_desc="&lt;p&gt;Cat. I This course provides an introduction to computer programming.&lt;/p&gt;" min-credits="3.0" max-credits="3.0"/>
-    <course number="2102" name="Object-Oriented Design Concepts" course_desc="Cat. I Object-oriented concepts and techniques." min-credits="3.0" max-credits="3.0"/>
+    <course number="1101" name="Introduction To Program Design" course_desc="&lt;p&gt;Cat. I This course provides an introduction to computer programming.&lt;/p&gt;" min-credits="3.0" max-credits="3.0">
+      <section number="A01" part-of-term="A Term"/>
+      <section number="C01" part-of-term="C Term"/>
+    </course>
+    <course number="2102" name="Object-Oriented Design Concepts" course_desc="Cat. I Object-oriented concepts and techniques." min-credits="3.0" max-credits="3.0">
+      <section number="B01" part-of-term="B Term"/>
+    </course>
   </dept>
   <dept abbrev="ECE" name="Electrical &amp; Computer Engineering">
     <course number="2010" name="Introduction to Electrical and Computer Engineering" course_desc="Introductory course for ECE." min-credits="3.0" max-credits="3.0"/>
@@ -37,14 +42,16 @@ SAMPLE_JSON = b"""{
       "Course_Description": "<p>Cat. I Introductory programming.</p>",
       "Subject": "Computer Science",
       "Academic_Level": "Undergraduate",
-      "Credits": "3"
+      "Credits": "3",
+      "Offering_Period": "2026 Fall A Term"
     },
     {
       "Course_Title": "MA 1021 - Calculus I",
       "Course_Description": "First calculus course.",
       "Subject": "Mathematical Sciences",
       "Academic_Level": "Undergraduate",
-      "Credits": "3"
+      "Credits": "3",
+      "Offering_Period": "2027 Spring C Term"
     }
   ]
 }
@@ -74,6 +81,8 @@ class TestScraper(unittest.TestCase):
             cs1101["course_description"],
             "Cat. I This course provides an introduction to computer programming."
         )
+        self.assertEqual(cs1101["academic_year"], "2026 - 2027 Academic Year")
+        self.assertEqual(cs1101["terms"], ["A", "C"])
 
     def test_parse_workday_json(self):
         courses = parse_workday_json(SAMPLE_JSON, clean_html=True)
@@ -82,6 +91,8 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(cs1101["course_code"], "CS 1101")
         self.assertEqual(cs1101["course_name"], "Introduction To Program Design")
         self.assertEqual(cs1101["course_description"], "Cat. I Introductory programming.")
+        self.assertEqual(cs1101["academic_year"], "2026 - 2027 Academic Year")
+        self.assertEqual(cs1101["terms"], ["A"])
 
     def test_export_json_and_csv(self):
         courses = parse_schedb_xml(SAMPLE_XML, clean_html=True)

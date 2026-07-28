@@ -48,7 +48,9 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
             "prerequisite_for": node.get("prerequisite_for", []),
             "aliases": node.get("aliases", []),
             "description": node.get("raw_prerequisite_text", ""),
-            "min_credits": node.get("min_credits", "3.0")
+            "min_credits": node.get("min_credits", "3.0"),
+            "academic_year": node.get("academic_year", "2026 - 2027 Academic Year"),
+            "terms": node.get("terms", [])
         })
 
     edges_js = []
@@ -111,9 +113,13 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
 <body>
   <!-- Header Bar -->
   <header id="header">
-    <div class="logo-container">
-      <span class="logo-badge">WPI</span>
-      <h1>WPI Course Catalog Visualizer</h1>
+    <div class="brand">
+      <div class="brand-icon">W</div>
+      <div class="brand-title">
+        <h1>Course Catalog Visualizer</h1>
+        <p>Worcester Polytechnic Institute</p>
+      </div>
+      <span class="academic-year-badge">2026 - 2027 Academic Year</span>
     </div>
     <div class="controls-container">
       <div class="search-box">

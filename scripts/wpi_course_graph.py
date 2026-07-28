@@ -27,6 +27,8 @@ def build_undirected_course_graph(dag: Dict[str, Dict[str, Any]]) -> Dict[str, D
     for code, node in graph.items():
         node["prerequisite_for"] = []
 
+    dept_names = {n["department_code"]: n["department_name"] for n in dag.values() if n.get("department_code") and n.get("department_name")}
+
     for code, node in list(graph.items()):
         for req in node.get("prerequisites", []):
             if req not in graph:
@@ -37,10 +39,12 @@ def build_undirected_course_graph(dag: Dict[str, Dict[str, Any]]) -> Dict[str, D
                     "course_code": req,
                     "course_name": f"Course {req}",
                     "department_code": dept,
-                    "department_name": "",
+                    "department_name": dept_names.get(dept, ""),
                     "course_number": num,
                     "min_credits": "",
                     "max_credits": "",
+                    "academic_year": node.get("academic_year", "2026 - 2027 Academic Year"),
+                    "terms": [],
                     "prerequisites": [],
                     "prerequisites_structured": [],
                     "raw_prerequisite_text": "",

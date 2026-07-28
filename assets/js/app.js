@@ -70,7 +70,9 @@ async function initApp() {
           prerequisite_for: n.prerequisite_for || [],
           aliases: n.aliases || [],
           raw_prerequisite_text: n.description || '',
-          min_credits: n.min_credits || '3.0'
+          min_credits: n.min_credits || '3.0',
+          academic_year: n.academic_year || '2026 - 2027 Academic Year',
+          terms: n.terms || []
         };
       });
     } else {
@@ -828,6 +830,39 @@ function selectCourse(code) {
   }
 }
 
+/**
+ * Format terms offered for display based on undergraduate vs graduate course logic.
+ * - Undergraduate (4 digits, or 3 digits with an X): show terms (A, B, C, D)
+ * - Graduate (exclusively 3 digits): A,B -> "Fall", C,D -> "Spring"
+ */
+function formatTermsOffered(node) {
+  const terms = node.terms || [];
+  if (!terms || terms.length === 0) return 'N/A';
+
+  let num = (node.course_number || '').trim();
+  if (!num && node.course_code) {
+    const parts = node.course_code.trim().split(/\s+/);
+    num = parts.length > 1 ? parts[1] : parts[0];
+  }
+
+  // Check if course number is exclusively 3 digits without an 'X' (Graduate course)
+  const isGraduate = /^\d{3}$/.test(num);
+
+  if (isGraduate) {
+    const seasons = new Set();
+    terms.forEach(t => {
+      if (t === 'A' || t === 'B') seasons.add('Fall');
+      if (t === 'C' || t === 'D') seasons.add('Spring');
+    });
+    const sortedSeasons = [];
+    if (seasons.has('Fall')) sortedSeasons.push('Fall');
+    if (seasons.has('Spring')) sortedSeasons.push('Spring');
+    return sortedSeasons.length > 0 ? sortedSeasons.join(', ') : 'N/A';
+  } else {
+    return terms.join(', ');
+  }
+}
+
 // HOVERABLE SIDEBAR BADGE POPOVER TOOLTIP ENGINE
 function showBadgeTooltip(e, code) {
   const node = rawGraphData[code];
@@ -840,10 +875,12 @@ function showBadgeTooltip(e, code) {
     ? node.prerequisites.join(', ')
     : 'None';
 
+  const termsText = formatTermsOffered(node);
+
   tooltip.innerHTML = `
     <div class="badge-tooltip-code">${node.course_code || code}</div>
     <div class="badge-tooltip-title">${node.course_name || 'Course Title'}</div>
-    <div class="badge-tooltip-meta"><strong>Dept:</strong> ${node.department_code || 'N/A'} | <strong>Credits:</strong> ${node.min_credits || '3.0'}</div>
+    <div class="badge-tooltip-meta"><strong>Dept:</strong> ${node.department_code || 'N/A'} | <strong>Credits:</strong> ${node.min_credits || '3.0'} | <strong>Terms Offered:</strong> ${termsText}</div>
     ${node.raw_prerequisite_text ? `<div class="badge-tooltip-desc">${node.raw_prerequisite_text}</div>` : ''}
     <div class="badge-tooltip-prereqs"><strong>Prerequisites:</strong> ${prereqText}</div>
   `;
@@ -1008,6 +1045,7 @@ function renderCourseDetails(node) {
       <div class="meta-row">
         <span><strong>Department:</strong> ${node.department_code || 'N/A'}</span>
         <span><strong>Credits:</strong> ${node.min_credits || '3.0'}</span>
+        <span><strong>Terms Offered:</strong> ${formatTermsOffered(node)}</span>
       </div>
     </div>
 
@@ -1123,8 +1161,87 @@ function renderDepartmentCourses(deptCode, activeCourseCode) {
     return codeA.localeCompare(codeB);
   });
 
+  const DEPT_NAME_MAP = {
+    'AB': 'Arabic',
+    'ACC': 'Accounting',
+    'AE': 'Aerospace Engineering',
+    'AR': 'Art',
+    'ARCH': 'Architecture',
+    'AREN': 'Architectural Engineering',
+    'AS': 'Air Science',
+    'BB': 'Biology & Biotechnology',
+    'BCB': 'Bioinformatics & Computational Biology',
+    'BME': 'Biomedical Engineering',
+    'BUS': 'Business',
+    'CE': 'Civil Engineering',
+    'CH': 'Chemistry & Biochemistry',
+    'CHE': 'Chemical Engineering',
+    'CN': 'Chinese',
+    'CS': 'Computer Science',
+    'DEV': 'Development',
+    'DS': 'Data Science',
+    'ECE': 'Electrical & Computer Engineering',
+    'ECON': 'Economics',
+    'EDU': 'Teacher Education',
+    'EN': 'English',
+    'ENV': 'Environmental Studies',
+    'ES': 'Engineering Science',
+    'ESL': 'English as a Second Language',
+    'ETR': 'Entrepreneurship',
+    'FIN': 'Finance',
+    'FP': 'Fire Protection',
+    'FY': 'First Year',
+    'GE': 'Geology',
+    'GN': 'German',
+    'GOV': 'Government',
+    'HI': 'History',
+    'HU': 'Humanities',
+    'ID': 'Interdisciplinary',
+    'IDG': 'Interdisciplinary-Graduate',
+    'IGS': 'Integrative & Global Studies',
+    'IMGD': 'Interactive Media & Game Development',
+    'INTL': 'International & Global Studies',
+    'ISE': 'Integrated Skills in English',
+    'MA': 'Mathematical Sciences',
+    'ME': 'Mechanical Engineering',
+    'MFE': 'Manufacturing Engineering',
+    'MIS': 'Management Information Systems',
+    'MKT': 'Marketing',
+    'ML': 'Military Leadership',
+    'MME': 'Mathematics for Educators',
+    'MTE': 'Materials Science & Engineering',
+    'MU': 'Music',
+    'NEU': 'Neuroscience',
+    'NSE': 'Nuclear Science & Engineering',
+    'OBC': 'Organizational Behavior & Change',
+    'OIE': 'Operations & Industrial Engineering',
+    'PH': 'Physics',
+    'PSY': 'Psychological Science',
+    'PY': 'Philosophy',
+    'RBE': 'Robotics Engineering',
+    'RE': 'Religion',
+    'SD': 'System Dynamics',
+    'SP': 'Spanish',
+    'SS': 'Social Science',
+    'STS': 'Society-Technology Studies',
+    'SYS': 'Systems Engineering',
+    'TH': 'Theatre',
+    'WR': 'Writing',
+    'WPE': 'Wellness & Physical Education'
+  };
+
+  function getDepartmentFullName(deptCode, courses = []) {
+    if (!deptCode) return '';
+    if (DEPT_NAME_MAP[deptCode]) return DEPT_NAME_MAP[deptCode];
+    for (const c of courses) {
+      if (c.department_name) return c.department_name;
+    }
+    return deptCode;
+  }
+
   if (titleEl) {
-    titleEl.textContent = `${deptCode} Dept (${deptCourses.length})`;
+    const deptFullName = getDepartmentFullName(deptCode, deptCourses);
+    titleEl.textContent = `${deptFullName} (${deptCourses.length})`;
   }
 
   if (deptCourses.length === 0) {

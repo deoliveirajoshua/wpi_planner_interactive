@@ -105,6 +105,20 @@ body {
   letter-spacing: 0.06em;
 }
 
+.academic-year-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: var(--wpi-crimson-light);
+  color: var(--wpi-crimson);
+  border: 1px solid rgba(172, 43, 55, 0.2);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
 /* Controls Toolbar */
 .toolbar,
 .controls-container {
