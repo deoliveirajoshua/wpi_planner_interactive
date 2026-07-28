@@ -130,9 +130,9 @@ body {
 .toolbar-right-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: calc(var(--sidebar-width) - 24px);
-  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .search-box {
@@ -196,7 +196,7 @@ body {
 }
 
 .select-control {
-  padding: 7px 12px;
+  padding: 7px 10px;
   background: var(--bg-main);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -205,6 +205,7 @@ body {
   font-weight: 500;
   outline: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .select-control:focus {
@@ -212,7 +213,7 @@ body {
 }
 
 .btn {
-  padding: 7px 14px;
+  padding: 7px 12px;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -221,6 +222,7 @@ body {
   background: var(--bg-main);
   color: var(--text-primary);
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn:hover {
@@ -237,6 +239,13 @@ body {
 .btn.active:hover {
   background: #8e232e;
   border-color: #8e232e;
+}
+
+#physics-toggle-btn {
+  min-width: 124px;
+  padding: 7px 10px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Compact Extra-Small Button for Tree Unwinder */
@@ -779,12 +788,30 @@ body {
   color: var(--text-secondary);
 }
 
+.modal-body a {
+  color: var(--wpi-crimson);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.modal-body a:hover {
+  text-decoration: underline;
+}
+
 .modal-section {
   margin-bottom: 18px;
 }
 
 .modal-section:last-child {
   margin-bottom: 0;
+}
+
+.modal-footer-note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.83rem;
+  color: var(--text-secondary);
 }
 
 .modal-section h3 {

@@ -94,7 +94,7 @@
   <div id="help-modal-overlay" class="modal-overlay" onclick="handleModalOverlayClick(event)">
     <div class="modal-card">
       <div class="modal-header">
-        <h2>How to Use Course Visualizer</h2>
+        <h2>Navigation Controls</h2>
         <button class="modal-close-btn" onclick="closeHelpModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -104,18 +104,18 @@
             <li><strong>Single Left-Click:</strong> Click any course node to highlight its prerequisite chain (Indigo)
               and unlocked courses (Blue) directly in the main view without hiding background courses. Single-click
               again to unselect.</li>
-            <li><strong>Double Left-Click:</strong> Double-click any course node to enter the <strong>Isolated Focused
-                View</strong> (hiding unrelated background nodes and auto-zooming). Click empty space to return to the
+            <li><strong>Double Left-Click:</strong> Double-click any course node to enter the <i>Isolated Focused
+                View</i> (hiding unrelated background nodes and auto-zooming). Click empty space to return to the
               full view with your selection preserved.</li>
-            <li><strong>Pan View:</strong> Hold <strong>Right-Click & Drag</strong> anywhere on the canvas to move
-              around smoothly.</li>
+            <li><strong>Pan View:</strong> Hold <i>Right-Click & Drag</i> anywhere on the canvas to move
+              around.</li>
             <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
-            <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <strong>Show
-                All</strong> in the sidebar to cluster and zoom into department courses.</li>
-            <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong>
+            <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <i>Show
+                All</i> in the sidebar to cluster and zoom into department courses.</li>
+            <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <i>Show All (Unwind)</i>
               to expand the full recursive prerequisite hierarchy tier by tier.</li>
-            <li><strong>Animation Toggle:</strong> Click <strong>Animation: OFF / ON</strong> to enable smooth live graph
-              physics with anti-collision spacing and gentle attraction.</li>
+            <li><strong>Animation Toggle:</strong> Enables graph physics (may slow performance on some systems).
+            </li>
           </ul>
         </div>
         <div class="modal-section">
@@ -127,9 +127,12 @@
               recommended for the selected course.</li>
             <li><span class="color-sample sky-sample"></span> <strong>Blue:</strong> Courses unlocked after completing
               the selected course.</li>
-            <li><span class="color-sample white-sample"></span> <strong>Cream / Slate Nodes:</strong> Background courses
-              in the full graph overview.</li>
+            <li><span class="color-sample white-sample"></span> <strong>White:</strong> All other courses.</li>
           </ul>
+        </div>
+        <div class="modal-section modal-footer-note">
+          <p>If you spot a bug or error <a href="https://github.com/deoliveirajoshua/wpi_planner_interactive/issues"
+              target="_blank" rel="noopener">submit an issue on GitHub</a>.</p>
         </div>
       </div>
     </div>
