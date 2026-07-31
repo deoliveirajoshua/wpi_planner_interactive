@@ -1545,9 +1545,89 @@ function handleModalOverlayClick(e) {
   }
 }
 
+// Global Keyboard Shortcuts Listener
 document.addEventListener('keydown', function (e) {
+  const activeEl = document.activeElement;
+  const isInputActive = activeEl && (
+    activeEl.tagName === 'INPUT' ||
+    activeEl.tagName === 'SELECT' ||
+    activeEl.tagName === 'TEXTAREA' ||
+    activeEl.isContentEditable
+  );
+
+  const helpOverlay = document.getElementById('help-modal-overlay');
+  const tutorialOverlay = document.getElementById('tutorial-modal-overlay');
+  const isHelpActive = helpOverlay && helpOverlay.classList.contains('active');
+  const isTutorialActive = tutorialOverlay && tutorialOverlay.classList.contains('active');
+
+  // Modal active keyboard controls
+  if (isTutorialActive) {
+    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      if (tutorialCurrentStep === TUTORIAL_STEPS.length - 1) {
+        finishTutorial();
+      } else {
+        nextTutorialStep();
+      }
+    } else if (e.key === 'ArrowLeft') {
+      prevTutorialStep();
+    } else if (e.key === 'Escape') {
+      closeTutorial();
+    }
+    return;
+  }
+
+  if (isHelpActive) {
+    if (e.key === 'Escape') {
+      closeHelpModal();
+    }
+    return;
+  }
+
+  // Active Input Element key handling
+  if (isInputActive) {
+    if (e.key === 'Escape') {
+      activeEl.blur();
+      const dropdown = document.getElementById('search-dropdown');
+      if (dropdown) dropdown.style.display = 'none';
+    }
+    return;
+  }
+
+  // Main Canvas & App Keyboard Shortcuts
+  const key = e.key.toLowerCase();
+
+  // Reset View: ONLY Escape
   if (e.key === 'Escape') {
-    closeHelpModal();
+    e.preventDefault();
+    resetView();
+  }
+  // Toggle Animation / Physics: ONLY 'P'
+  else if (key === 'p') {
+    e.preventDefault();
+    togglePhysics();
+  }
+  // Toggle Highlighted vs Isolated View: ONLY Space bar
+  else if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault();
+    if (currentSelectedCourse) {
+      if (selectionMode === 'isolated') {
+        highlightCoursePathFullView(currentSelectedCourse);
+      } else {
+        highlightCoursePathIsolated(currentSelectedCourse);
+      }
+    }
+  }
+  // Toggle Unwind Prerequisites: 'U'
+  else if (key === 'u') {
+    e.preventDefault();
+    if (currentSelectedCourse) {
+      toggleShowAllPrereqs(currentSelectedCourse);
+    }
+  }
+  // Open Help Modal: ONLY '?'
+  else if (e.key === '?') {
+    e.preventDefault();
+    openHelpModal();
   }
 });
 
@@ -1612,7 +1692,7 @@ const TUTORIAL_STEPS = [
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
     title: 'Welcome to WPI Course Catalog Visualizer',
-    desc: 'Explore WPI’s complete course catalog through an interactive prerequisite network graph map. View course information and visualize course relationships (prerequisites, aliases, etc.).',
+    desc: 'Explore WPI’s complete course catalog through an interactive prerequisite network graph map. View course information and visualize course relationships (prerequisites, aliases, etc.).\nNote: For scheduling purposes, use <a href="https://planner.wpi.edu">planner.wpi.edu</a> or <a href="https://courselistings.wpi.edu/search">courselistings.wpi.edu</a>.',
     highlights: [
       { text: 'Visual prerequisite graph with color-coded nodes and connection links.' },
       { text: 'Real-time information that is up-to-date with WPI\'s official course catalog.' }
@@ -1797,19 +1877,3 @@ function handleTutorialOverlayClick(e) {
   }
 }
 
-document.addEventListener('keydown', function (e) {
-  const overlay = document.getElementById('tutorial-modal-overlay');
-  if (overlay && overlay.classList.contains('active')) {
-    if (e.key === 'ArrowRight' || e.key === 'Enter') {
-      if (tutorialCurrentStep === TUTORIAL_STEPS.length - 1) {
-        finishTutorial();
-      } else {
-        nextTutorialStep();
-      }
-    } else if (e.key === 'ArrowLeft') {
-      prevTutorialStep();
-    } else if (e.key === 'Escape') {
-      closeTutorial();
-    }
-  }
-});

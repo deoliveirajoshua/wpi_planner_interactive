@@ -882,11 +882,12 @@ body {
   background: #b8b09f;
 }
 
-/* Permanent Left-Hand Corner Controls & Legend Widget */
+/* Bottom Left Controls & Legend Widget */
 .controls-legend-widget {
   position: absolute;
   bottom: 16px;
   left: 16px;
+  right: auto;
   z-index: 10;
   width: 250px;
   background: rgba(253, 251, 247, 0.92);
@@ -898,6 +899,15 @@ body {
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.8rem;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  .controls-legend-widget {
+    left: 16px;
+  }
+  .legend-group.keyboard-shortcuts-group {
+    display: none;
+  }
 }
 
 .controls-legend-widget:hover {

@@ -145,6 +145,46 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
       <div class="stat-pill">Departments: <span id="stat-depts" class="num">{len(depts)}</span></div>
       <div class="stat-pill">Prerequisite Links: <span id="stat-links" class="num">{len(edges_js)}</span></div>
     </div>
+    <div id="controls-legend-widget" class="controls-legend-widget">
+      <div class="legend-header" onclick="toggleControlsLegend()">
+        <div class="legend-title">
+          Controls & Legend
+        </div>
+        <button id="legend-toggle-btn" class="legend-toggle-btn" aria-label="Toggle Legend" title="Collapse/Expand Legend">
+          ▼
+        </button>
+      </div>
+      <div id="legend-content" class="legend-content">
+        <div class="legend-group">
+          <div class="group-title">Graph Node Colors</div>
+          <div class="legend-items-grid">
+            <div class="legend-item"><span class="color-sample red-sample"></span> <span>Selected</span></div>
+            <div class="legend-item"><span class="color-sample indigo-sample"></span> <span>Prerequisites</span></div>
+            <div class="legend-item"><span class="color-sample sky-sample"></span> <span>Unlocks</span></div>
+            <div class="legend-item"><span class="color-sample white-sample"></span> <span>All Others</span></div>
+          </div>
+        </div>
+        <div class="legend-group">
+          <div class="group-title">Canvas Controls</div>
+          <ul class="controls-list">
+            <li><span class="control-key">Left Click</span> Highlight chain</li>
+            <li><span class="control-key">Double Click</span> Isolate view</li>
+            <li><span class="control-key">Right Drag</span> Pan canvas</li>
+            <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
+          </ul>
+        </div>
+        <div class="legend-group keyboard-shortcuts-group">
+          <div class="group-title">Keyboard Shortcuts</div>
+          <ul class="controls-list">
+            <li><span class="control-key">Esc</span> Reset view</li>
+            <li><span class="control-key">P</span> Toggle animation</li>
+            <li><span class="control-key">Space</span> Highlight / Isolate</li>
+            <li><span class="control-key">U</span> Unwind prereqs</li>
+            <li><span class="control-key">?</span> Help modal</li>
+          </ul>
+        </div>
+      </div>
+    </div>
     <div id="mynetwork"></div>
     <aside id="sidebar">
       <div class="sidebar-section">
@@ -189,6 +229,16 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
             <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <strong>Show All</strong> in the sidebar to cluster and zoom into department courses.</li>
             <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.</li>
             <li><strong>Animation Toggle:</strong> Click <strong>Animation: OFF / ON</strong> to enable smooth live graph physics with anti-collision spacing and gentle attraction.</li>
+          </ul>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Keyboard Shortcuts</div>
+          <ul class="help-list">
+            <li><strong>Escape:</strong> Reset graph view, department filters, search input, and selection path.</li>
+            <li><strong>P:</strong> Toggle live graph animation / physics simulation ON or OFF.</li>
+            <li><strong>Space:</strong> Toggle between <strong>Highlighted Main View</strong> and <strong>Isolated Focused View</strong> for the selected course.</li>
+            <li><strong>U:</strong> Toggle recursive prerequisite tree unwinding (Show All Prereqs) for the selected course.</li>
+            <li><strong>?:</strong> Open this Help & Controls guide.</li>
           </ul>
         </div>
         <div class="modal-section">
