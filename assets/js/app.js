@@ -642,8 +642,8 @@ function highlightCoursePathFullView(targetCode) {
     network.focus(targetCode, {
       scale: currentScale,
       animation: {
-        duration: 600,
-        easingFunction: 'easeInOutQuad'
+        duration: 3000,
+        easingFunction: 'easeInOutQuint'
       }
     });
   }
@@ -1676,14 +1676,14 @@ function renderTutorialStep() {
     showAllPrereqsActive = false;
     highlightCoursePathFullView('MA 1024');
     if (network) {
-      network.focus('MA 1024', { scale: 1.0, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+      network.focus('MA 1024', { scale: 1.0, animation: false });
     }
   } else if (tutorialCurrentStep === 3) {
     // Step 4: Unwind MA 1024 to show full upstream prerequisite tree in graph & sidebar
     showAllPrereqsActive = true;
     highlightCoursePathFullView('MA 1024');
     if (network) {
-      network.focus('MA 1024', { scale: 1.0, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+      network.focus('MA 1024', { scale: 1.0, animation: false });
     }
   } else if (tutorialCurrentStep === 0) {
     // Step 1: Clean background state
@@ -1774,6 +1774,17 @@ function closeTutorial() {
   try {
     localStorage.setItem('wpi_planner_tutorial_seen', 'true');
   } catch (e) { }
+
+  if (tutorialCurrentStep >= 2) {
+    showAllPrereqsActive = false;
+    highlightCoursePathFullView('MA 1024');
+  } else {
+    showAllPrereqsActive = false;
+    clearHighlightPath();
+    if (network) {
+      network.fit({ animation: false });
+    }
+  }
 }
 
 function finishTutorial() {
