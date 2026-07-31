@@ -6,14 +6,14 @@
   --bg-main: #f5f0e6;
   --bg-card: #fdfbf7;
   --bg-sidebar: #ffffff;
-  
+
   --border-color: #e2ddd3;
   --border-hover: #cbd5e1;
-  
+
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #64748b;
-  
+
   /* WPI Crimson & High-Contrast Graph Accents */
   --wpi-crimson: #AC2B37;
   --wpi-crimson-hover: #8B222C;
@@ -618,7 +618,7 @@ body {
   border-radius: 8px;
   padding: 12px 14px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 3000;
   width: 290px;
   pointer-events: none;
   display: none;
@@ -847,10 +847,22 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.red-sample { background: var(--wpi-crimson); }
-.indigo-sample { background: var(--badge-indigo-text); }
-.sky-sample { background: var(--badge-sky-text); }
-.white-sample { background: #ffffff; border-color: #64748b; }
+.red-sample {
+  background: var(--wpi-crimson);
+}
+
+.indigo-sample {
+  background: var(--badge-indigo-text);
+}
+
+.sky-sample {
+  background: var(--badge-sky-text);
+}
+
+.white-sample {
+  background: #ffffff;
+  border-color: #64748b;
+}
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -1007,7 +1019,10 @@ body {
 
 /* Step-by-Step Tutorial Modal Styles */
 .tutorial-modal-card {
-  max-width: 580px;
+  width: 580px;
+  max-width: calc(100vw - 32px);
+  height: 420px;
+  max-height: calc(100vh - 32px);
   border-radius: 14px;
 }
 
@@ -1054,7 +1069,8 @@ body {
 
 .tutorial-modal-body {
   padding: 24px;
-  min-height: 240px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .tutorial-step-card {
@@ -1069,6 +1085,7 @@ body {
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1197,4 +1214,82 @@ body {
 .btn-subtle:hover {
   color: var(--text-primary);
   background: transparent;
+}
+
+/* Step 2 Focused Highlight for Search Bar and Department Dropdown */
+body.tutorial-step-2-active #header {
+  position: relative;
+  z-index: 2001;
+  background: transparent;
+  pointer-events: none;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+body.tutorial-step-2-active .brand,
+body.tutorial-step-2-active .toolbar-right-group button,
+body.tutorial-step-2-active .academic-year-badge {
+  opacity: 0.4;
+}
+
+body.tutorial-step-2-active .search-box input,
+body.tutorial-step-2-active #dept-select {
+  pointer-events: auto;
+  position: relative;
+  z-index: 2002;
+  border: 2px solid var(--wpi-crimson) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(172, 43, 55, 0.35), 0 0 20px rgba(172, 43, 55, 0.6);
+  animation: tutorialRedPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes tutorialRedPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(172, 43, 55, 0.4), 0 0 12px rgba(172, 43, 55, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(172, 43, 55, 0.75), 0 0 24px rgba(172, 43, 55, 0.85);
+  }
+}
+
+/* Steps 3 & 4 Focused Highlight for Right Sidebar Course Details Section */
+body.tutorial-step-3-active #sidebar,
+body.tutorial-step-4-active #sidebar {
+  position: relative;
+  z-index: 2001;
+  background: transparent;
+  border-left: none !important;
+  pointer-events: none;
+}
+
+body.tutorial-step-3-active .sidebar-section:not(.details-section),
+body.tutorial-step-4-active .sidebar-section:not(.details-section) {
+  opacity: 0.3;
+}
+
+body.tutorial-step-3-active .details-section,
+body.tutorial-step-4-active .details-section {
+  position: relative;
+  z-index: 2002;
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+  border-radius: 12px 0 0 0;
+  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.15);
+  pointer-events: auto;
+}
+
+/* Step 4 Red Highlight for Collapse Tree / Show All Button */
+body.tutorial-step-4-active .details-section .detail-block-header button {
+  position: relative;
+  z-index: 2003;
+  border: 2px solid var(--wpi-crimson) !important;
+  background: #ffffff !important;
+  color: var(--wpi-crimson) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 4px rgba(172, 43, 55, 0.35), 0 0 20px rgba(172, 43, 55, 0.6);
+  animation: tutorialRedPulse 1.5s infinite ease-in-out;
 }

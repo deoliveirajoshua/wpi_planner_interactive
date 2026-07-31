@@ -636,6 +636,18 @@ function highlightCoursePathFullView(targetCode) {
   nodesDataSet.update(nodeUpdates);
   edgesDataSet.update(edgeUpdates);
 
+  if (network && targetCode) {
+    network.selectNodes([targetCode]);
+    const currentScale = network.getScale();
+    network.focus(targetCode, {
+      scale: currentScale,
+      animation: {
+        duration: 600,
+        easingFunction: 'easeInOutQuad'
+      }
+    });
+  }
+
   renderCourseDetails(node);
   const dept = node.department_code || node.department;
   if (dept) {
@@ -668,6 +680,10 @@ function highlightCoursePathIsolated(targetCode) {
   if (dropdown) dropdown.style.display = 'none';
 
   const activeNodeIds = highlightCoursePath(targetCode);
+
+  if (network && targetCode) {
+    network.selectNodes([targetCode]);
+  }
 
   if (activeNodeIds && activeNodeIds.size > 0) {
     network.fit({
@@ -740,6 +756,10 @@ function clearHighlightPath() {
 
   nodesDataSet.update(nodeUpdates);
   edgesDataSet.update(edgeUpdates);
+
+  if (network) {
+    network.unselect();
+  }
 
   // Re-enable physics only if physics toggle is ON and returning to unselected main view
   if (isPhysicsEnabled) {
@@ -1130,6 +1150,27 @@ function extractCourseSortWeight(code) {
   return 20000 + num;
 }
 
+let deptCourseClickTimer = null;
+
+function handleDeptCourseClick(e, code) {
+  if (deptCourseClickTimer) {
+    clearTimeout(deptCourseClickTimer);
+    deptCourseClickTimer = null;
+  }
+  deptCourseClickTimer = setTimeout(() => {
+    deptCourseClickTimer = null;
+    selectCourse(code);
+  }, 220);
+}
+
+function handleDeptCourseDblClick(e, code) {
+  if (deptCourseClickTimer) {
+    clearTimeout(deptCourseClickTimer);
+    deptCourseClickTimer = null;
+  }
+  highlightCoursePathIsolated(code);
+}
+
 // Render Scrollable Department Courses Directory
 function renderDepartmentCourses(deptCode, activeCourseCode) {
   const titleEl = document.getElementById('dept-courses-title');
@@ -1258,7 +1299,7 @@ function renderDepartmentCourses(deptCode, activeCourseCode) {
     const isActive = (code === activeCourseCode);
 
     return `
-      <div class="dept-course-item ${isActive ? 'active' : ''}" data-code="${code}" onclick="selectCourse('${code}')">
+      <div class="dept-course-item ${isActive ? 'active' : ''}" data-code="${code}" onclick="handleDeptCourseClick(event, '${code}')" ondblclick="handleDeptCourseDblClick(event, '${code}')">
         <span class="dept-course-code">${code}</span>
         <span class="dept-course-title" title="${name}">${name}</span>
       </div>
@@ -1571,38 +1612,39 @@ const TUTORIAL_STEPS = [
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
     title: 'Welcome to WPI Course Catalog Visualizer',
-    desc: 'Explore WPI’s complete course offerings through an interactive prerequisite network graph map. Visualize course dependencies, unlock pathways, and plan your degree sequence effortlessly.',
+    desc: 'Explore WPI’s complete course catalog through an interactive prerequisite network graph map. View course information and visualize course relationships (prerequisites, aliases, etc.).',
     highlights: [
       { text: 'Visual prerequisite graph with color-coded nodes and connection links.' },
-      { text: 'Real-time department filtering and instant course lookup.' }
+      { text: 'Real-time information that is up-to-date with WPI\'s official course catalog.' }
     ]
   },
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
     title: 'Search & Department Filtering',
-    desc: 'Quickly find any course or isolate an entire academic department using the header toolbar.',
+    desc: 'Quickly find any course or department using the search bar and department dropdown highlighted in red above.',
     highlights: [
       { text: 'Type a course code (e.g. <strong>MA 1024</strong>) in the search bar for instant autocomplete suggestions.' },
-      { text: 'Select a department from the dropdown to focus on its specific curriculum.' }
+      { text: 'Select a department from the dropdown to focus on its course offerings.' }
     ]
   },
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
-    title: 'Graph Node Interactivity & Isolation',
-    desc: 'Click on any course node in the canvas to explore its academic dependencies:',
+    title: 'Graph Interactivity',
+    desc: 'Notice <strong>MA 1024</strong> highlighted in the background graph view! Click on any course node in the canvas to explore its connections:',
     highlights: [
-      { text: '<strong>Single Left-Click:</strong> Highlights prerequisite chain (Indigo) and unlocked downstream courses (Blue).' },
-      { text: '<strong>Double Left-Click:</strong> Enters <i>Isolated Focused View</i>, hiding unrelated courses and auto-zooming.' },
-      { text: '<strong>Right-Click & Drag</strong> anywhere to pan; scroll your mouse wheel to zoom in or out.' }
+      { text: '<strong>Left-Click:</strong> Highlights prerequisites (indigo) and unlocked courses (blue).' },
+      { text: '<strong>Double Left-Click:</strong> Temporarily hides all unrelated courses from view.' },
+      { text: '<strong>Hold Right-Click & Drag:</strong> Pan around the graph.' },
+      { text: '<strong>Scroll Wheel:</strong> Zoom in and out.' }
     ]
   },
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
     title: 'Course Details & Prerequisite Unwinder',
-    desc: 'The right sidebar drawer displays rich course metadata whenever a node is selected.',
+    desc: 'The right sidebar displays course details for <strong>MA 1024</strong> along with its unwound prerequisite tree. Hover or click over the courses in this sidebar to see their details.',
     highlights: [
-      { text: 'View course descriptions, credit hours, prerequisites, and courses unlocked.' },
-      { text: 'Click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.' }
+      { text: 'View descriptions, credits, prerequisites, and terms offered for the selected course in the sidebar.' },
+      { text: '<strong>Show All (Unwind)</strong> displays all upstream prerequisites (Tier 1: MA 1023, Tier 2: MA 1022, Tier 3: MA 1021) needed before enrolling in MA 1024.' }
     ]
   }
 ];
@@ -1622,6 +1664,32 @@ function startTutorial() {
 function renderTutorialStep() {
   const step = TUTORIAL_STEPS[tutorialCurrentStep];
   const total = TUTORIAL_STEPS.length;
+
+  // Manage Step-Specific Body Classes for Highlights
+  document.body.classList.toggle('tutorial-step-2-active', tutorialCurrentStep === 1);
+  document.body.classList.toggle('tutorial-step-3-active', tutorialCurrentStep === 2);
+  document.body.classList.toggle('tutorial-step-4-active', tutorialCurrentStep === 3);
+
+  // Steps 3 & 4 Live Graph & Sidebar Demos using MA 1024
+  if (tutorialCurrentStep === 2) {
+    // Step 3: Show MA 1024 in Full Graph View (Direct prerequisites / unlocks)
+    showAllPrereqsActive = false;
+    highlightCoursePathFullView('MA 1024');
+    if (network) {
+      network.focus('MA 1024', { scale: 1.0, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+    }
+  } else if (tutorialCurrentStep === 3) {
+    // Step 4: Unwind MA 1024 to show full upstream prerequisite tree in graph & sidebar
+    showAllPrereqsActive = true;
+    highlightCoursePathFullView('MA 1024');
+    if (network) {
+      network.focus('MA 1024', { scale: 1.0, animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+    }
+  } else if (tutorialCurrentStep === 0) {
+    // Step 1: Clean background state
+    showAllPrereqsActive = false;
+    clearHighlightPath();
+  }
 
   // Counter & Progress Bar
   const counterEl = document.getElementById('tutorial-step-counter');
@@ -1700,6 +1768,7 @@ function goToTutorialStep(stepIndex) {
 }
 
 function closeTutorial() {
+  document.body.classList.remove('tutorial-step-2-active', 'tutorial-step-3-active', 'tutorial-step-4-active');
   const overlay = document.getElementById('tutorial-modal-overlay');
   if (overlay) overlay.classList.remove('active');
   try {
