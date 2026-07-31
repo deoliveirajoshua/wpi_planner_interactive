@@ -48,6 +48,7 @@
 
         <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Animation: OFF</button>
         <button class="btn" onclick="resetView()">Reset View</button>
+        <button class="btn" onclick="startTutorial()">Tutorial</button>
         <button class="btn" onclick="openHelpModal()">Help</button>
       </div>
     </div>
@@ -60,6 +61,39 @@
       <div class="stat-pill">Courses: <span id="stat-courses" class="num">0</span></div>
       <div class="stat-pill">Departments: <span id="stat-depts" class="num">0</span></div>
       <div class="stat-pill">Prerequisite Links: <span id="stat-links" class="num">0</span></div>
+    </div>
+
+    <!-- Permanent Left-Hand Corner Controls & Legend Widget -->
+    <div id="controls-legend-widget" class="controls-legend-widget">
+      <div class="legend-header" onclick="toggleControlsLegend()">
+        <div class="legend-title">
+          Controls & Legend
+        </div>
+        <button id="legend-toggle-btn" class="legend-toggle-btn" aria-label="Toggle Legend"
+          title="Collapse/Expand Legend">
+          ▼
+        </button>
+      </div>
+      <div id="legend-content" class="legend-content">
+        <div class="legend-group">
+          <div class="group-title">Graph Node Colors</div>
+          <div class="legend-items-grid">
+            <div class="legend-item"><span class="color-sample red-sample"></span> <span>Selected</span></div>
+            <div class="legend-item"><span class="color-sample indigo-sample"></span> <span>Prerequisites</span></div>
+            <div class="legend-item"><span class="color-sample sky-sample"></span> <span>Unlocks</span></div>
+            <div class="legend-item"><span class="color-sample white-sample"></span> <span>All Others</span></div>
+          </div>
+        </div>
+        <div class="legend-group">
+          <div class="group-title">Canvas Controls</div>
+          <ul class="controls-list">
+            <li><span class="control-key">Left Click</span> Highlight chain</li>
+            <li><span class="control-key">Double Click</span> Isolate view</li>
+            <li><span class="control-key">Right Drag</span> Pan canvas</li>
+            <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <!-- Vis.js Network Canvas -->
@@ -89,6 +123,37 @@
 
   <!-- Dynamic Hover Popover Tooltip for Sidebar Course Badges -->
   <div id="badge-tooltip" class="badge-tooltip"></div>
+
+  <!-- Interactive Step-by-Step Tutorial Modal Overlay -->
+  <div id="tutorial-modal-overlay" class="modal-overlay" onclick="handleTutorialOverlayClick(event)">
+    <div class="modal-card tutorial-modal-card">
+      <div class="modal-header tutorial-modal-header">
+        <div class="tutorial-header-left">
+          <span class="tutorial-badge">Welcome Tour</span>
+          <span id="tutorial-step-counter" class="step-counter">Step 1 of 4</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeTutorial()">&times;</button>
+      </div>
+      <div class="tutorial-progress-track">
+        <div id="tutorial-progress-bar" class="tutorial-progress-bar" style="width: 25%;"></div>
+      </div>
+      <div class="modal-body tutorial-modal-body">
+        <div id="tutorial-step-container" class="tutorial-step-content">
+          <!-- Dynamic Step Content Rendered by JS -->
+        </div>
+      </div>
+      <div class="tutorial-modal-footer">
+        <button id="tutorial-skip-btn" class="btn btn-subtle" onclick="closeTutorial()">Skip Tour</button>
+        <div class="tutorial-pagination-dots" id="tutorial-pagination-dots">
+          <!-- Dynamic Dots Rendered by JS -->
+        </div>
+        <div class="tutorial-nav-buttons">
+          <button id="tutorial-prev-btn" class="btn" onclick="prevTutorialStep()" style="display: none;">Back</button>
+          <button id="tutorial-next-btn" class="btn btn-primary" onclick="nextTutorialStep()">Next &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Help Modal Overlay -->
   <div id="help-modal-overlay" class="modal-overlay" onclick="handleModalOverlayClick(event)">
@@ -139,8 +204,9 @@
   </div>
 
   <footer id="footer">
-    Site maintained by Joshua DeOliveira. All data shown is collected from&nbsp;<a href="https://planner.wpi.edu/"
-      target="_blank" rel="noopener">https://planner.wpi.edu/</a>.
+    Site maintained by&nbsp;<a href="https://deoliveirajoshua.github.io/" target="_blank" rel="noopener">Joshua
+      DeOliveira</a>. All data shown is collected from&nbsp;<a href="https://planner.wpi.edu/" target="_blank"
+      rel="noopener">https://planner.wpi.edu/</a>.
   </footer>
 
   <!-- Application Logic -->

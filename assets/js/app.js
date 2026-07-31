@@ -88,6 +88,9 @@ async function initApp() {
     populateDepartmentSelect(rawGraphData);
     renderDepartmentCourses('ALL', null);
 
+    // Launch tutorial immediately on site load
+    startTutorial();
+
     // Hide search dropdown on click outside
     document.addEventListener('click', function (e) {
       const searchBox = document.querySelector('.search-box');
@@ -1550,3 +1553,183 @@ function togglePhysics() {
 
 // Initialize on DOM Load
 document.addEventListener('DOMContentLoaded', initApp);
+
+// ============================================================================
+// PERMANENT CONTROLS & LEGEND WIDGET LOGIC
+// ============================================================================
+function toggleControlsLegend() {
+  const widget = document.getElementById('controls-legend-widget');
+  if (widget) {
+    widget.classList.toggle('collapsed');
+  }
+}
+
+// ============================================================================
+// INTERACTIVE STEP-BY-STEP ONBOARDING TUTORIAL LOGIC
+// ============================================================================
+const TUTORIAL_STEPS = [
+  {
+    iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
+    title: 'Welcome to WPI Course Catalog Visualizer',
+    desc: 'Explore WPI’s complete course offerings through an interactive prerequisite network graph map. Visualize course dependencies, unlock pathways, and plan your degree sequence effortlessly.',
+    highlights: [
+      { text: 'Visual prerequisite graph with color-coded nodes and connection links.' },
+      { text: 'Real-time department filtering and instant course lookup.' }
+    ]
+  },
+  {
+    iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    title: 'Search & Department Filtering',
+    desc: 'Quickly find any course or isolate an entire academic department using the header toolbar.',
+    highlights: [
+      { text: 'Type a course code (e.g. <strong>MA 1024</strong>) in the search bar for instant autocomplete suggestions.' },
+      { text: 'Select a department from the dropdown to focus on its specific curriculum.' }
+    ]
+  },
+  {
+    iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+    title: 'Graph Node Interactivity & Isolation',
+    desc: 'Click on any course node in the canvas to explore its academic dependencies:',
+    highlights: [
+      { text: '<strong>Single Left-Click:</strong> Highlights prerequisite chain (Indigo) and unlocked downstream courses (Blue).' },
+      { text: '<strong>Double Left-Click:</strong> Enters <i>Isolated Focused View</i>, hiding unrelated courses and auto-zooming.' },
+      { text: '<strong>Right-Click & Drag</strong> anywhere to pan; scroll your mouse wheel to zoom in or out.' }
+    ]
+  },
+  {
+    iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+    title: 'Course Details & Prerequisite Unwinder',
+    desc: 'The right sidebar drawer displays rich course metadata whenever a node is selected.',
+    highlights: [
+      { text: 'View course descriptions, credit hours, prerequisites, and courses unlocked.' },
+      { text: 'Click <strong>Show All (Unwind)</strong> to expand the full recursive prerequisite hierarchy tier by tier.' }
+    ]
+  }
+];
+
+let tutorialCurrentStep = 0;
+
+function startTutorial() {
+  closeHelpModal();
+  tutorialCurrentStep = 0;
+  const overlay = document.getElementById('tutorial-modal-overlay');
+  if (overlay) {
+    overlay.classList.add('active');
+    renderTutorialStep();
+  }
+}
+
+function renderTutorialStep() {
+  const step = TUTORIAL_STEPS[tutorialCurrentStep];
+  const total = TUTORIAL_STEPS.length;
+
+  // Counter & Progress Bar
+  const counterEl = document.getElementById('tutorial-step-counter');
+  if (counterEl) counterEl.textContent = `Step ${tutorialCurrentStep + 1} of ${total}`;
+
+  const progressEl = document.getElementById('tutorial-progress-bar');
+  if (progressEl) progressEl.style.width = `${((tutorialCurrentStep + 1) / total) * 100}%`;
+
+  // Step Content Container
+  const container = document.getElementById('tutorial-step-container');
+  if (container) {
+    container.innerHTML = `
+      <div class="tutorial-step-card">
+        <div class="step-header-row">
+          <div class="step-hero-icon">${step.iconSvg}</div>
+          <div class="step-title">${step.title}</div>
+        </div>
+        <div class="step-desc">${step.desc}</div>
+        <div class="step-highlights">
+          ${step.highlights.map(h => `
+            <div class="step-highlight-item">
+              <span class="step-highlight-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span>${h.text}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Dots
+  const dotsEl = document.getElementById('tutorial-pagination-dots');
+  if (dotsEl) {
+    dotsEl.innerHTML = TUTORIAL_STEPS.map((_, idx) => `
+      <div class="dot ${idx === tutorialCurrentStep ? 'active' : ''}" onclick="goToTutorialStep(${idx})"></div>
+    `).join('');
+  }
+
+  // Buttons
+  const prevBtn = document.getElementById('tutorial-prev-btn');
+  if (prevBtn) {
+    prevBtn.style.display = tutorialCurrentStep === 0 ? 'none' : 'inline-block';
+  }
+
+  const nextBtn = document.getElementById('tutorial-next-btn');
+  if (nextBtn) {
+    if (tutorialCurrentStep === total - 1) {
+      nextBtn.textContent = 'Finish Tour';
+      nextBtn.onclick = finishTutorial;
+    } else {
+      nextBtn.innerHTML = 'Next &rarr;';
+      nextBtn.onclick = nextTutorialStep;
+    }
+  }
+}
+
+function nextTutorialStep() {
+  if (tutorialCurrentStep < TUTORIAL_STEPS.length - 1) {
+    tutorialCurrentStep++;
+    renderTutorialStep();
+  }
+}
+
+function prevTutorialStep() {
+  if (tutorialCurrentStep > 0) {
+    tutorialCurrentStep--;
+    renderTutorialStep();
+  }
+}
+
+function goToTutorialStep(stepIndex) {
+  if (stepIndex >= 0 && stepIndex < TUTORIAL_STEPS.length) {
+    tutorialCurrentStep = stepIndex;
+    renderTutorialStep();
+  }
+}
+
+function closeTutorial() {
+  const overlay = document.getElementById('tutorial-modal-overlay');
+  if (overlay) overlay.classList.remove('active');
+  try {
+    localStorage.setItem('wpi_planner_tutorial_seen', 'true');
+  } catch (e) { }
+}
+
+function finishTutorial() {
+  closeTutorial();
+}
+
+function handleTutorialOverlayClick(e) {
+  if (e.target && e.target.id === 'tutorial-modal-overlay') {
+    closeTutorial();
+  }
+}
+
+document.addEventListener('keydown', function (e) {
+  const overlay = document.getElementById('tutorial-modal-overlay');
+  if (overlay && overlay.classList.contains('active')) {
+    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      if (tutorialCurrentStep === TUTORIAL_STEPS.length - 1) {
+        finishTutorial();
+      } else {
+        nextTutorialStep();
+      }
+    } else if (e.key === 'ArrowLeft') {
+      prevTutorialStep();
+    } else if (e.key === 'Escape') {
+      closeTutorial();
+    }
+  }
+});
