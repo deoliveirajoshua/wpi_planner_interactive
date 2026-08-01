@@ -54,27 +54,84 @@ const COLOR_WPI_CRIMSON = '#AC2B37';
 const COLOR_PREREQ_ANCESTOR = '#4338ca';   // Deep Royal Indigo for Direct Prerequisites
 const COLOR_UNLOCK_DESCENDANT = '#0284c7';  // Ocean Sky Blue for Direct Unlocked Courses
 
+let currentAcademicYearSuffix = '2026_2027';
+
+function parseRawNodeList(nodes) {
+  const parsed = {};
+  nodes.forEach(n => {
+    parsed[n.id] = {
+      course_code: n.id,
+      course_name: n.name,
+      department_code: n.department,
+      department: n.department,
+      prerequisites: n.prerequisites || [],
+      prerequisites_structured: n.prerequisites_structured || [],
+      prerequisite_for: n.prerequisite_for || [],
+      aliases: n.aliases || [],
+      course_description: n.course_description || '',
+      raw_prerequisite_text: n.raw_prerequisite_text || n.description || '',
+      raw_alias_text: n.raw_alias_text || '',
+      min_credits: n.min_credits || '3.0',
+      academic_year: n.academic_year || '2026 - 2027 Academic Year',
+      terms: n.terms || []
+    };
+  });
+  return parsed;
+}
+
+// Switch Catalog Academic Year Dataset
+async function changeAcademicYear(yearSuffix) {
+  currentAcademicYearSuffix = yearSuffix;
+
+  const yearSelect = document.getElementById('academic-year-select');
+  if (yearSelect && yearSelect.value !== yearSuffix) {
+    yearSelect.value = yearSuffix;
+  }
+
+  const statsCourses = document.getElementById('stat-courses');
+  if (statsCourses) statsCourses.textContent = '...';
+
+  try {
+    let newData = null;
+
+    if (typeof window.rawHistoricalGraphs !== 'undefined' && window.rawHistoricalGraphs[yearSuffix]) {
+      newData = parseRawNodeList(window.rawHistoricalGraphs[yearSuffix]);
+    } else if (typeof window.rawEmbeddedNodes !== 'undefined' && yearSuffix === '2026_2027') {
+      newData = parseRawNodeList(window.rawEmbeddedNodes);
+    } else {
+      let fetchUrl = 'data/wpi_course_graph.json';
+      if (yearSuffix !== '2026_2027') {
+        fetchUrl = `data/historical/wpi_course_graph_${yearSuffix}.json`;
+      }
+      const response = await fetch(fetchUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to load historical graph data: ${response.status}`);
+      }
+      newData = await response.json();
+    }
+
+    rawGraphData = newData;
+
+    selectedCourseNode = null;
+    highlightedPathNodes = new Set();
+    isolatedViewActive = false;
+    showAllPrereqsActive = false;
+
+    populateDepartmentSelect(rawGraphData);
+    setupNetwork(rawGraphData);
+    renderStats(rawGraphData);
+    renderDepartmentCourses('ALL', null);
+  } catch (err) {
+    console.error("Error switching academic year catalog:", err);
+    alert(`Could not load academic year dataset for ${yearSuffix}.`);
+  }
+}
+
 // Initialize Application
 async function initApp() {
   try {
     if (typeof window.rawEmbeddedNodes !== 'undefined' && Array.isArray(window.rawEmbeddedNodes)) {
-      rawGraphData = {};
-      window.rawEmbeddedNodes.forEach(n => {
-        rawGraphData[n.id] = {
-          course_code: n.id,
-          course_name: n.name,
-          department_code: n.department,
-          department: n.department,
-          prerequisites: n.prerequisites || [],
-          prerequisites_structured: n.prerequisites_structured || [],
-          prerequisite_for: n.prerequisite_for || [],
-          aliases: n.aliases || [],
-          raw_prerequisite_text: n.description || '',
-          min_credits: n.min_credits || '3.0',
-          academic_year: n.academic_year || '2026 - 2027 Academic Year',
-          terms: n.terms || []
-        };
-      });
+      rawGraphData = parseRawNodeList(window.rawEmbeddedNodes);
     } else {
       const response = await fetch('data/wpi_course_graph.json');
       if (!response.ok) {
@@ -653,6 +710,11 @@ function highlightCoursePathFullView(targetCode) {
   if (dept) {
     renderDepartmentCourses(dept, targetCode);
   }
+
+  if (isMobileViewport()) {
+    openMobileDrawer();
+    updateMobileFAB(targetCode);
+  }
 }
 
 // ISOLATED FOCUSED VIEW (Hides background nodes)
@@ -700,10 +762,17 @@ function highlightCoursePathIsolated(targetCode) {
   if (dept) {
     renderDepartmentCourses(dept, targetCode);
   }
+
+  if (isMobileViewport()) {
+    openMobileDrawer();
+    updateMobileFAB(targetCode);
+  }
 }
 
 // BATCHED OPTIMIZED CLEAR
 function clearHighlightPath() {
+  updateMobileFAB(null);
+
   if (selectionMode === 'none' && !currentSelectedCourse) {
     return; // Already in clean unselected state; no re-render needed
   }
@@ -935,6 +1004,41 @@ function hideBadgeTooltip() {
   if (tooltip) tooltip.style.display = 'none';
 }
 
+// Clean course description by removing prerequisite statements, notes, and restrictions
+function cleanCourseDescription(desc, prereqText, aliasText) {
+  if (!desc) return '';
+  let cleaned = desc.trim();
+
+  const prereqPattern = /(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-].*?(?=\.\s+[A-Z]|\.$|\n|$)/gi;
+  cleaned = cleaned.replace(prereqPattern, '').trim();
+
+  const restrictionPatterns = [
+    /(?:students\s+)?(?:may\s+not|cannot|can\s+not|credit\s+is\s+not\s+allowed)\s+(?:receive\s+credit|allowed)\s+for\s+both\s+.*?(?=\.|\n|$)/gi,
+    /(?:students\s+)?(?:may\s+not|cannot|can\s+not)\s+receive\s+credit\s+for\s+this\s+course\s+if\s+they\s+have\s+taken\s+.*?(?=\.|\n|$)/gi,
+    /replaces\s+.*?(?=\.|\n|$)/gi,
+    /also\s+offered\s+as\s+.*?(?=\.|\n|$)/gi,
+    /cross-listed\s+as\s+.*?(?=\.|\n|$)/gi,
+    /equivalent\s+course\s*:.*?(?=\.|\n|$)/gi
+  ];
+
+  restrictionPatterns.forEach(pat => {
+    cleaned = cleaned.replace(pat, '').trim();
+  });
+
+  if (prereqText && prereqText.length > 5 && cleaned.includes(prereqText.trim())) {
+    cleaned = cleaned.replace(prereqText.trim(), '').trim();
+  }
+
+  if (aliasText && aliasText.length > 5 && cleaned.includes(aliasText.trim())) {
+    cleaned = cleaned.replace(aliasText.trim(), '').trim();
+  }
+
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  cleaned = cleaned.replace(/\.\s*\.+$/, '.').trim();
+
+  return cleaned;
+}
+
 // Render Details Sidebar Panel with Visual OR/AND Group Rendering & Tree Unwinder
 function renderCourseDetails(node) {
   const panel = document.getElementById('details-panel');
@@ -1058,6 +1162,7 @@ function renderCourseDetails(node) {
     : '';
 
   const hasPrereqs = (node.prerequisites || []).length > 0;
+  const cleanedDesc = cleanCourseDescription(node.course_description || node.raw_prerequisite_text, node.raw_prerequisite_text, node.raw_alias_text);
 
   panel.innerHTML = `
     <div class="course-card-header">
@@ -1098,6 +1203,13 @@ function renderCourseDetails(node) {
       </div>
     ` : ''}
 
+    ${cleanedDesc ? `
+      <div class="detail-block">
+        <div class="detail-block-label">Description</div>
+        <div class="description-text">${cleanedDesc}</div>
+      </div>
+    ` : ''}
+
     ${node.raw_prerequisite_text ? `
       <div class="detail-block">
         <div class="detail-block-label">Prerequisite Statement</div>
@@ -1117,14 +1229,29 @@ function renderCourseDetails(node) {
 // Department Selector
 function populateDepartmentSelect(graphData) {
   const select = document.getElementById('dept-select');
-  const depts = Array.from(new Set(Object.values(graphData).map(n => n.department_code || 'OTHER'))).sort();
+  if (!select) return;
 
-  depts.forEach(d => {
+  const currentVal = select.value || 'ALL';
+  select.innerHTML = '<option value="ALL">All Departments and Programs</option>';
+
+  const deptMap = {};
+  Object.values(graphData).forEach(n => {
+    const code = n.department_code || 'OTHER';
+    const name = n.department_name || n.department || code;
+    deptMap[code] = name;
+  });
+
+  const sortedCodes = Object.keys(deptMap).sort();
+
+  sortedCodes.forEach(code => {
     const opt = document.createElement('option');
-    opt.value = d;
-    opt.textContent = d;
+    opt.value = code;
+    const fullName = deptMap[code];
+    opt.textContent = (fullName && fullName !== code) ? `${code} — ${fullName}` : code;
     select.appendChild(opt);
   });
+
+  select.value = (currentVal in deptMap || currentVal === 'ALL') ? currentVal : 'ALL';
 }
 
 function extractCourseSortWeight(code) {
@@ -1171,6 +1298,37 @@ function handleDeptCourseDblClick(e, code) {
   highlightCoursePathIsolated(code);
 }
 
+// Show All Departments (resets view but preserves active course details if selected)
+function showAllDepartments() {
+  const deptSelect = document.getElementById('dept-select');
+  if (deptSelect) deptSelect.value = 'ALL';
+
+  hideBadgeTooltip();
+  restoreOriginalPositions();
+
+  const updates = [];
+  nodesDataSet.forEach(n => {
+    updates.push({ id: n.id, hidden: false });
+  });
+  nodesDataSet.update(updates);
+
+  const savedCourse = currentSelectedCourse;
+
+  if (savedCourse && rawGraphData[savedCourse]) {
+    highlightCoursePathFullView(savedCourse);
+    renderCourseDetails(rawGraphData[savedCourse]);
+    renderDepartmentCourses('ALL', savedCourse);
+  } else {
+    renderDepartmentCourses('ALL', null);
+  }
+
+  if (network) {
+    network.fit({
+      animation: { duration: 400, easingFunction: 'easeInOutQuad' }
+    });
+  }
+}
+
 // Render Scrollable Department Courses Directory
 function renderDepartmentCourses(deptCode, activeCourseCode) {
   const titleEl = document.getElementById('dept-courses-title');
@@ -1179,16 +1337,19 @@ function renderDepartmentCourses(deptCode, activeCourseCode) {
 
   if (!container) return;
 
-  if (!deptCode || deptCode === 'ALL') {
-    if (titleEl) titleEl.textContent = 'Department Courses';
-    if (showAllBtn) showAllBtn.style.display = 'none';
-    container.innerHTML = '<p class="placeholder-msg">Select a department or click a course to view all courses in that department.</p>';
-    return;
+  if (showAllBtn) {
+    if (deptCode && deptCode !== 'ALL') {
+      showAllBtn.style.display = 'inline-flex';
+      showAllBtn.onclick = showAllDepartments;
+    } else {
+      showAllBtn.style.display = 'none';
+    }
   }
 
-  if (showAllBtn) {
-    showAllBtn.style.display = 'inline-flex';
-    showAllBtn.onclick = () => filterDepartment(deptCode);
+  if (!deptCode || deptCode === 'ALL') {
+    if (titleEl) titleEl.textContent = 'Department Courses';
+    container.innerHTML = '<p class="placeholder-msg">Select a department or click a course to view all courses in that department.</p>';
+    return;
   }
 
   const deptCourses = Object.values(rawGraphData).filter(c => {
@@ -1542,6 +1703,61 @@ function closeHelpModal() {
 function handleModalOverlayClick(e) {
   if (e.target && e.target.id === 'help-modal-overlay') {
     closeHelpModal();
+  }
+}
+
+// Mobile Viewport & Drawer Navigation Engine
+function isMobileViewport() {
+  return window.innerWidth <= 1024 || window.innerHeight <= 600;
+}
+
+function toggleMobileMenu() {
+  const group = document.getElementById('toolbar-right-group');
+  if (group) {
+    group.classList.toggle('mobile-active');
+  }
+}
+
+function closeMobileMenu() {
+  const group = document.getElementById('toolbar-right-group');
+  if (group) {
+    group.classList.remove('mobile-active');
+  }
+}
+
+function openMobileDrawer() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobile-drawer-overlay');
+  if (sidebar) sidebar.classList.add('mobile-open');
+  if (overlay) overlay.classList.add('mobile-active');
+}
+
+function closeMobileDrawer(e) {
+  if (e) e.stopPropagation();
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobile-drawer-overlay');
+  if (sidebar) sidebar.classList.remove('mobile-open');
+  if (overlay) overlay.classList.remove('mobile-active');
+}
+
+function toggleMobileDrawer() {
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('mobile-open')) {
+    closeMobileDrawer();
+  } else {
+    openMobileDrawer();
+  }
+}
+
+function updateMobileFAB(courseCode) {
+  const iconEl = document.getElementById('mobile-fab-icon');
+  const labelEl = document.getElementById('mobile-fab-label');
+  if (courseCode) {
+    if (iconEl) iconEl.textContent = '⚡';
+    if (labelEl) labelEl.textContent = `${courseCode} Details`;
+  } else {
+    if (iconEl) iconEl.textContent = '📋';
+    if (labelEl) labelEl.textContent = 'Course Details & List';
   }
 }
 

@@ -41,6 +41,7 @@ def build_undirected_course_graph(dag: Dict[str, Dict[str, Any]]) -> Dict[str, D
                     "department_code": dept,
                     "department_name": dept_names.get(dept, ""),
                     "course_number": num,
+                    "course_description": "",
                     "min_credits": "",
                     "max_credits": "",
                     "academic_year": node.get("academic_year", "2026 - 2027 Academic Year"),

@@ -4,7 +4,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WPI Course Catalog Visualizer</title>
+  <title>WPI Course Planner & Catalog Visualizer</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Interactive course planner and prerequisite network visualizer for Worcester Polytechnic Institute (WPI). Explore course offerings, unwind prerequisite chains, and inspect course details.">
+  <meta name="keywords" content="WPI, Worcester Polytechnic Institute, WPI Course Planner, WPI Course Catalog, WPI Prerequisites, Course Visualizer, WPI Schedule, Degree Planning">
+  <meta name="author" content="Joshua DeOliveira">
+
+  <!-- Open Graph / Social Sharing Meta Tags -->
+  <meta property="og:title" content="WPI Course Planner & Catalog Visualizer">
+  <meta property="og:description" content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses. Explore course offerings, unwind prerequisite chains, and inspect course details.">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WPI Course Planner & Catalog Visualizer">
+  <meta name="twitter:description" content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses.">
 
   <!-- Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,25 +42,33 @@
     <div class="brand">
       <div class="brand-icon">W</div>
       <div class="brand-title">
-        <h1>Course Catalog Visualizer</h1>
+        <h1>Course Planner & Catalog Visualizer</h1>
         <p>Worcester Polytechnic Institute</p>
       </div>
-      <span class="academic-year-badge">2026 - 2027 Academic Year</span>
+      <select id="academic-year-select" class="academic-year-select" onchange="changeAcademicYear(this.value)" aria-label="Select Academic Year" title="Select Academic Year Catalog">
+        <option value="2026_2027" selected>2026 - 2027 Academic Year</option>
+        <option value="2025_2026">2025 - 2026 Academic Year</option>
+        <option value="2024_2025">2024 - 2025 Academic Year</option>
+        <option value="2023_2024">2023 - 2024 Academic Year</option>
+        <option value="2022_2023">2022 - 2023 Academic Year</option>
+        <option value="2021_2022">2021 - 2022 Academic Year</option>
+      </select>
     </div>
 
     <!-- Controls Toolbar -->
     <div class="toolbar">
       <div class="search-box">
-        <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..."
+        <input type="text" id="search-input" placeholder="Search for a course (e.g. MA 1022)..."
           onkeydown="handleSearchInput(event)">
         <div id="search-dropdown" class="search-dropdown"></div>
       </div>
 
-      <div class="toolbar-right-group">
-        <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
-          <option value="ALL">All Departments</option>
-        </select>
+      <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="toggleMobileMenu()"
+        aria-label="Toggle Mobile Controls Menu">
+        <span></span><span></span><span></span>
+      </button>
 
+      <div id="toolbar-right-group" class="toolbar-right-group">
         <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Animation: OFF</button>
         <button class="btn" onclick="resetView()">Reset View</button>
         <button class="btn" onclick="startTutorial()">Tutorial</button>
@@ -59,11 +82,11 @@
     <!-- Floating Stats Bar -->
     <div class="stats-bar">
       <div class="stat-pill">Courses: <span id="stat-courses" class="num">0</span></div>
-      <div class="stat-pill">Departments: <span id="stat-depts" class="num">0</span></div>
+      <div class="stat-pill">Departments & Programs: <span id="stat-depts" class="num">0</span></div>
       <div class="stat-pill">Prerequisite Links: <span id="stat-links" class="num">0</span></div>
     </div>
 
-    <!-- Permanent Left-Hand Corner Controls & Legend Widget -->
+    <!-- Bottom Left Controls & Legend Widget -->
     <div id="controls-legend-widget" class="controls-legend-widget">
       <div class="legend-header" onclick="toggleControlsLegend()">
         <div class="legend-title">
@@ -75,33 +98,35 @@
         </button>
       </div>
       <div id="legend-content" class="legend-content">
-        <div class="legend-group">
-          <div class="group-title">Graph Node Colors</div>
-          <div class="legend-items-grid">
-            <div class="legend-item"><span class="color-sample red-sample"></span> <span>Selected</span></div>
-            <div class="legend-item"><span class="color-sample indigo-sample"></span> <span>Prerequisites</span></div>
-            <div class="legend-item"><span class="color-sample sky-sample"></span> <span>Unlocks</span></div>
-            <div class="legend-item"><span class="color-sample white-sample"></span> <span>All Others</span></div>
+        <div class="legend-content-inner">
+          <div class="legend-group">
+            <div class="group-title">Graph Node Colors</div>
+            <div class="legend-items-grid">
+              <div class="legend-item"><span class="color-sample red-sample"></span> <span>Selected</span></div>
+              <div class="legend-item"><span class="color-sample indigo-sample"></span> <span>Prerequisites</span></div>
+              <div class="legend-item"><span class="color-sample sky-sample"></span> <span>Unlocks</span></div>
+              <div class="legend-item"><span class="color-sample white-sample"></span> <span>All Others</span></div>
+            </div>
           </div>
-        </div>
-        <div class="legend-group">
-          <div class="group-title">Canvas Controls</div>
-          <ul class="controls-list">
-            <li><span class="control-key">Left Click</span> Highlight chain</li>
-            <li><span class="control-key">Double Click</span> Isolate view</li>
-            <li><span class="control-key">Right Drag</span> Pan canvas</li>
-            <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
-          </ul>
-        </div>
-        <div class="legend-group keyboard-shortcuts-group">
-          <div class="group-title">Keyboard Shortcuts</div>
-          <ul class="controls-list">
-            <li><span class="control-key">Esc</span> Reset view</li>
-            <li><span class="control-key">P</span> Toggle animation</li>
-            <li><span class="control-key">Space</span> Highlight / Isolate</li>
-            <li><span class="control-key">U</span> Unwind prereqs</li>
-            <li><span class="control-key">?</span> Help modal</li>
-          </ul>
+          <div class="legend-group">
+            <div class="group-title">Canvas Controls</div>
+            <ul class="controls-list">
+              <li><span class="control-key">Left Click</span> Highlight chain</li>
+              <li><span class="control-key">Double Click</span> Isolate view</li>
+              <li><span class="control-key">Right Drag</span> Pan canvas</li>
+              <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
+            </ul>
+          </div>
+          <div class="legend-group keyboard-shortcuts-group">
+            <div class="group-title">Keyboard Shortcuts</div>
+            <ul class="controls-list">
+              <li><span class="control-key">Esc</span> Reset view</li>
+              <li><span class="control-key">P</span> Toggle animation</li>
+              <li><span class="control-key">Space</span> Highlight / Isolate</li>
+              <li><span class="control-key">U</span> Unwind prereqs</li>
+              <li><span class="control-key">?</span> Help modal</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -109,12 +134,23 @@
     <!-- Vis.js Network Canvas -->
     <div id="mynetwork"></div>
 
-    <!-- Right Sidebar Drawer -->
+    <!-- Mobile Drawer Overlay Backdrop -->
+    <div id="mobile-drawer-overlay" class="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
+
+    <!-- Right/Bottom Sidebar Drawer -->
     <aside id="sidebar">
+      <div class="mobile-drawer-handle-bar" onclick="toggleMobileDrawer()">
+        <div class="drawer-drag-pill"></div>
+        <div class="mobile-drawer-title">Course Details & List</div>
+        <button class="mobile-drawer-close-btn" onclick="closeMobileDrawer(event)"
+          aria-label="Close Drawer">&times;</button>
+      </div>
+
       <div class="sidebar-section">
         <div class="section-title-row">
-          <div class="section-title" id="dept-courses-title">Department Courses</div>
-          <button id="dept-show-all-btn" class="btn-xs" style="display: none;">Show All</button>
+          <select id="dept-select" class="dept-select sidebar-dept-select" onchange="filterDepartment(this.value)" aria-label="Filter by Department" title="Filter Graph by Department">
+            <option value="ALL">All Departments and Programs</option>
+          </select>
         </div>
         <div id="dept-courses-list" class="dept-courses-list">
           <p class="placeholder-msg">Select a department or click a course to view all courses in that department.</p>
@@ -129,6 +165,11 @@
         </div>
       </div>
     </aside>
+
+    <!-- Mobile Floating Action Button (FAB) -->
+    <button id="mobile-fab-details" class="mobile-fab-btn" onclick="toggleMobileDrawer()">
+      <span id="mobile-fab-icon">📋</span> <span id="mobile-fab-label">Course Details & List</span>
+    </button>
   </div>
 
   <!-- Dynamic Hover Popover Tooltip for Sidebar Course Badges -->
@@ -198,8 +239,10 @@
           <ul class="help-list">
             <li><strong>Escape:</strong> Reset graph view, department filters, search input, and selection path.</li>
             <li><strong>P:</strong> Toggle live graph animation / physics simulation ON or OFF.</li>
-            <li><strong>Space:</strong> Toggle between <i>Highlighted Main View</i> and <i>Isolated Focused View</i> for the selected course.</li>
-            <li><strong>U:</strong> Toggle recursive prerequisite tree unwinding (Show All Prereqs) for the selected course.</li>
+            <li><strong>Space:</strong> Toggle between <i>Highlighted Main View</i> and <i>Isolated Focused View</i> for
+              the selected course.</li>
+            <li><strong>U:</strong> Toggle recursive prerequisite tree unwinding (Show All Prereqs) for the selected
+              course.</li>
             <li><strong>?:</strong> Open this Help & Controls guide.</li>
           </ul>
         </div>

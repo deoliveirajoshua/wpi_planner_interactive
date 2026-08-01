@@ -162,6 +162,40 @@ def parse_aliases(description: str, current_code: str, valid_codes: Set[str] = N
     return sorted(list(alias_set)), raw_snippet
 
 
+def clean_course_description(description: str, prereq_raw: str = "", alias_raw: str = "") -> str:
+    """
+    Remove prerequisite statements, notes, and credit restrictions from course description text.
+    """
+    if not description:
+        return ""
+
+    text = description.strip()
+
+    prereq_pattern = r'(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-].*?(?=\.\s+[A-Z]|\.$|\n|$)'
+    text = re.sub(prereq_pattern, '', text, flags=re.IGNORECASE).strip()
+
+    restriction_patterns = [
+        r'(?:students\s+)?(?:may\s+not|cannot|can\s+not|credit\s+is\s+not\s+allowed)\s+(?:receive\s+credit|allowed)\s+for\s+both\s+.*?(?=\.|\n|$)',
+        r'(?:students\s+)?(?:may\s+not|cannot|can\s+not)\s+receive\s+credit\s+for\s+this\s+course\s+if\s+they\s+have\s+taken\s+.*?(?=\.|\n|$)',
+        r'replaces\s+.*?(?=\.|\n|$)',
+        r'also\s+offered\s+as\s+.*?(?=\.|\n|$)',
+        r'cross-listed\s+as\s+.*?(?=\.|\n|$)',
+        r'equivalent\s+course\s*:.*?(?=\.|\n|$)'
+    ]
+    for pat in restriction_patterns:
+        text = re.sub(pat, '', text, flags=re.IGNORECASE).strip()
+
+    if prereq_raw and prereq_raw.strip() in text:
+        text = text.replace(prereq_raw.strip(), '').strip()
+
+    if alias_raw and alias_raw.strip() in text:
+        text = text.replace(alias_raw.strip(), '').strip()
+
+    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r'\.\s*\.+$', '.', text).strip()
+    return text
+
+
 def build_course_graph(courses: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     """
     Build course dependency and alias graph from course dataset.
@@ -177,6 +211,7 @@ def build_course_graph(courses: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any
 
         prereq_codes, prereq_struct, prereq_raw = parse_prerequisites(desc, valid_codes)
         alias_codes, alias_raw = parse_aliases(desc, code, valid_codes=None)
+        clean_desc = clean_course_description(desc, prereq_raw, alias_raw)
 
         graph[code] = {
             "course_code": code,
@@ -184,6 +219,7 @@ def build_course_graph(courses: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any
             "department_code": c.get("department_code", ""),
             "department_name": c.get("department_name", ""),
             "course_number": c.get("course_number", ""),
+            "course_description": clean_desc,
             "min_credits": c.get("min_credits", ""),
             "max_credits": c.get("max_credits", ""),
             "academic_year": c.get("academic_year", "2026 - 2027 Academic Year"),

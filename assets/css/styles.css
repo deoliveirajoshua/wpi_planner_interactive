@@ -105,18 +105,78 @@ body {
   letter-spacing: 0.06em;
 }
 
-.academic-year-badge {
+/* Modern Select Dropdown Controls */
+.academic-year-select,
+.dept-select {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
-  background: var(--wpi-crimson-light);
-  color: var(--wpi-crimson);
-  border: 1px solid rgba(172, 43, 55, 0.2);
+  height: 34px;
+  padding: 0 32px 0 12px;
+  background-color: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.78rem;
   font-weight: 600;
-  margin-left: 8px;
+  letter-spacing: -0.01em;
   white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.academic-year-select {
+  background-color: var(--wpi-crimson-light);
+  color: var(--wpi-crimson);
+  border-color: rgba(172, 43, 55, 0.25);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23ac2b37' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 0.78rem;
+  margin-left: 8px;
+}
+
+.dept-select {
+  width: 100%;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.academic-year-select:hover {
+  background-color: rgba(172, 43, 55, 0.14);
+  border-color: var(--wpi-crimson);
+  box-shadow: 0 3px 10px rgba(172, 43, 55, 0.15);
+  transform: translateY(-1px);
+}
+
+.dept-select:hover {
+  background-color: #ffffff;
+  border-color: var(--wpi-crimson);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.academic-year-select:focus,
+.dept-select:focus {
+  border-color: var(--wpi-crimson);
+  box-shadow: 0 0 0 3px rgba(172, 43, 55, 0.18);
+}
+
+.academic-year-select option,
+.dept-select option {
+  background: #ffffff;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 8px 12px;
 }
 
 /* Controls Toolbar */
@@ -142,33 +202,41 @@ body {
 
 .search-box input {
   width: 100%;
-  padding: 7px 12px;
-  background: var(--bg-main);
+  height: 34px;
+  padding: 0 14px;
+  background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 9999px;
   color: var(--text-primary);
-  font-size: 0.85rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.8rem;
   font-weight: 500;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.search-box input:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
 }
 
 .search-box input:focus {
   outline: none;
   border-color: var(--wpi-crimson);
   background: #ffffff;
-  box-shadow: 0 0 0 3px var(--wpi-crimson-light);
+  box-shadow: 0 0 0 3px rgba(172, 43, 55, 0.18);
 }
 
 /* Fast Search Autocomplete Dropdown */
 .search-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   z-index: 200;
   max-height: 280px;
   overflow-y: auto;
@@ -176,7 +244,7 @@ body {
 }
 
 .search-item {
-  padding: 8px 12px;
+  padding: 8px 14px;
   font-size: 0.825rem;
   cursor: pointer;
   border-bottom: 1px solid var(--border-color);
@@ -195,50 +263,51 @@ body {
   font-weight: 600;
 }
 
-.select-control {
-  padding: 7px 10px;
-  background: var(--bg-main);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.select-control:focus {
-  border-color: var(--wpi-crimson);
-}
-
 .btn {
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.78rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   cursor: pointer;
   border: 1px solid var(--border-color);
-  background: var(--bg-main);
+  background: #ffffff;
   color: var(--text-primary);
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .btn:hover {
-  background: #e5e1d8;
-  border-color: var(--border-hover);
+  background: #ffffff;
+  border-color: var(--wpi-crimson);
+  color: var(--wpi-crimson);
+  box-shadow: 0 3px 10px rgba(172, 43, 55, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn:focus {
+  outline: none;
+  border-color: var(--wpi-crimson);
+  box-shadow: 0 0 0 3px rgba(172, 43, 55, 0.18);
 }
 
 .btn.active {
   background: var(--wpi-crimson);
   color: #ffffff;
   border-color: var(--wpi-crimson);
+  box-shadow: 0 3px 10px rgba(172, 43, 55, 0.25);
 }
 
 .btn.active:hover {
   background: #8e232e;
   border-color: #8e232e;
+  transform: translateY(-1px);
 }
 
 #physics-toggle-btn {
@@ -924,6 +993,7 @@ body {
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
   user-select: none;
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .legend-title {
@@ -947,7 +1017,7 @@ body {
   font-size: 0.7rem;
   color: var(--text-muted);
   cursor: pointer;
-  transition: transform 0.25s ease, color 0.15s ease;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease;
   padding: 2px 4px;
 }
 
@@ -956,18 +1026,32 @@ body {
 }
 
 .controls-legend-widget.collapsed .legend-header {
-  border-bottom: none;
-}
-
-.controls-legend-widget.collapsed .legend-content {
-  display: none;
+  border-bottom-color: transparent;
 }
 
 .legend-content {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateY(0);
+  transform-origin: top;
+}
+
+.legend-content-inner {
+  min-height: 0;
+  overflow: hidden;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.controls-legend-widget.collapsed .legend-content {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
 }
 
 .legend-group {
@@ -1302,4 +1386,413 @@ body.tutorial-step-4-active .details-section .detail-block-header button {
   font-weight: 700 !important;
   box-shadow: 0 0 0 4px rgba(172, 43, 55, 0.35), 0 0 20px rgba(172, 43, 55, 0.6);
   animation: tutorialRedPulse 1.5s infinite ease-in-out;
+}
+
+/* ============================================================================
+   RESPONSIVE MOBILE & LANDSCAPE ENGINE
+   ============================================================================ */
+
+/* Hide mobile elements on desktop by default */
+.mobile-drawer-handle-bar,
+.mobile-drawer-overlay,
+.mobile-fab-btn,
+.mobile-menu-btn {
+  display: none;
+}
+
+/* ----------------------------------------------------------------------------
+   1. PORTRAIT MOBILE VIEWPORTS (<768px portrait)
+   ---------------------------------------------------------------------------- */
+@media (max-width: 767px) and (orientation: portrait), (max-width: 600px) {
+  #header {
+    padding: 0 12px;
+    height: 54px;
+  }
+
+  .brand-title p,
+  .academic-year-badge {
+    display: none;
+  }
+
+  .brand-title h1 {
+    font-size: 1rem;
+  }
+
+  .search-box {
+    width: 140px;
+  }
+
+  .search-box input {
+    padding: 5px 8px;
+    font-size: 0.78rem;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    width: 34px;
+    height: 34px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .mobile-menu-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.2s ease;
+  }
+
+  .toolbar-right-group {
+    display: none;
+    position: absolute;
+    top: 54px;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    z-index: 150;
+  }
+
+  .toolbar-right-group.mobile-active {
+    display: flex;
+  }
+
+  .toolbar-right-group .select-control,
+  .toolbar-right-group .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+
+  /* Stats Bar on Mobile */
+  .stats-bar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    gap: 6px;
+    justify-content: space-between;
+  }
+
+  .stat-pill {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Controls Legend Widget on Mobile */
+  .controls-legend-widget {
+    bottom: 64px;
+    left: 8px;
+    width: 200px;
+  }
+
+  /* Slide-Up Bottom Sheet Drawer */
+  #sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 70vh;
+    max-height: 85vh;
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.2);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+  }
+
+  #sidebar.mobile-open {
+    transform: translateY(0);
+  }
+
+  .mobile-drawer-handle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 18px 18px 0 0;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .drawer-drag-pill {
+    width: 36px;
+    height: 4px;
+    background: var(--border-hover);
+    border-radius: 2px;
+    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .mobile-drawer-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .mobile-drawer-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0 4px;
+  }
+
+  /* Backdrop Overlay */
+  .mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+  }
+
+  .mobile-drawer-overlay.mobile-active {
+    display: block;
+  }
+
+  /* Mobile Floating Action Button (FAB) */
+  .mobile-fab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;
+    background: var(--wpi-crimson);
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 10px 20px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 6px 18px rgba(172, 43, 55, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .mobile-fab-btn:active {
+    transform: translateX(-50%) scale(0.95);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   2. LANDSCAPE VIEWPORTS (<1024px landscape / height <600px)
+   ---------------------------------------------------------------------------- */
+@media (max-width: 1023px) and (orientation: landscape), (max-height: 600px) and (min-width: 601px) {
+  #header {
+    height: 46px;
+    padding: 0 14px;
+  }
+
+  .brand-title h1 {
+    font-size: 0.95rem;
+  }
+
+  .brand-title p,
+  .academic-year-badge {
+    display: none;
+  }
+
+  .search-box {
+    width: 180px;
+  }
+
+  .search-box input {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+
+  .toolbar-right-group .select-control,
+  .toolbar-right-group .btn {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+
+  #main-container {
+    height: calc(100vh - 46px);
+  }
+
+  /* Slide-Over Right Side Drawer for Landscape */
+  #sidebar {
+    position: fixed;
+    top: 46px;
+    bottom: 0;
+    right: 0;
+    width: 320px;
+    height: calc(100vh - 46px);
+    background: var(--bg-sidebar);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -10px 0 30px rgba(15, 23, 42, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+  }
+
+  #sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .mobile-drawer-handle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+
+  .drawer-drag-pill {
+    display: none;
+  }
+
+  .mobile-drawer-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .mobile-drawer-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    top: 46px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.35);
+    z-index: 999;
+  }
+
+  .mobile-drawer-overlay.mobile-active {
+    display: block;
+  }
+
+  /* Side-Docked FAB for Landscape */
+  .mobile-fab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    left: auto;
+    transform: none;
+    z-index: 900;
+    background: var(--wpi-crimson);
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 14px rgba(172, 43, 55, 0.35);
+    cursor: pointer;
+  }
+
+  .stats-bar {
+    top: 8px;
+    left: 8px;
+  }
+
+  .controls-legend-widget {
+    bottom: 8px;
+    left: 8px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   TUTORIAL ACTIVE STEP TARGET HIGHLIGHTS
+   ---------------------------------------------------------------------------- */
+@keyframes tutorialPulse {
+  0% {
+    box-shadow: 0 0 0 2px rgba(172, 43, 55, 0.4), 0 2px 8px rgba(172, 43, 55, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(172, 43, 55, 0.65), 0 6px 18px rgba(172, 43, 55, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(172, 43, 55, 0.4), 0 2px 8px rgba(172, 43, 55, 0.2);
+  }
+}
+
+.modal-card {
+  z-index: 2050 !important;
+  position: relative;
+}
+
+body.tutorial-step-2-active #header,
+body.tutorial-step-3-active #sidebar,
+body.tutorial-step-4-active #sidebar {
+  z-index: 2010 !important;
+  position: relative;
+}
+
+body.tutorial-step-2-active #sidebar {
+  overflow: visible !important;
+}
+
+body.tutorial-step-2-active .search-box input,
+body.tutorial-step-2-active #dept-select {
+  border-color: var(--wpi-crimson) !important;
+  animation: tutorialPulse 1.8s infinite ease-in-out !important;
+  position: relative;
+  z-index: 2020 !important;
+  background-color: #ffffff !important;
+}
+
+body.tutorial-step-3-active .sidebar-section.details-section,
+body.tutorial-step-4-active .sidebar-section.details-section {
+  border: 2px solid var(--wpi-crimson) !important;
+  border-radius: 12px;
+  animation: tutorialPulse 1.8s infinite ease-in-out !important;
+  position: relative;
+  z-index: 2020 !important;
+  background-color: #ffffff !important;
 }

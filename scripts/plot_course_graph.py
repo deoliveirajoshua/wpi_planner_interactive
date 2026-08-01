@@ -47,6 +47,9 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
             "prerequisites_structured": node.get("prerequisites_structured", []),
             "prerequisite_for": node.get("prerequisite_for", []),
             "aliases": node.get("aliases", []),
+            "course_description": node.get("course_description", ""),
+            "raw_prerequisite_text": node.get("raw_prerequisite_text", ""),
+            "raw_alias_text": node.get("raw_alias_text", ""),
             "description": node.get("raw_prerequisite_text", ""),
             "min_credits": node.get("min_credits", "3.0"),
             "academic_year": node.get("academic_year", "2026 - 2027 Academic Year"),
@@ -101,7 +104,12 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Course Visualizer</title>
+  <title>WPI Course Planner & Catalog Visualizer</title>
+  <meta name="description" content="Interactive course planner and prerequisite network visualizer for Worcester Polytechnic Institute (WPI). Explore course offerings, unwind prerequisite chains, and inspect course details.">
+  <meta name="keywords" content="WPI, Worcester Polytechnic Institute, WPI Course Planner, WPI Course Catalog, WPI Prerequisites, Course Visualizer, WPI Schedule, Degree Planning">
+  <meta property="og:title" content="WPI Course Planner & Catalog Visualizer">
+  <meta property="og:description" content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses.">
+  <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
@@ -116,21 +124,27 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
     <div class="brand">
       <div class="brand-icon">W</div>
       <div class="brand-title">
-        <h1>Course Catalog Visualizer</h1>
+        <h1>Course Planner & Catalog Visualizer</h1>
         <p>Worcester Polytechnic Institute</p>
       </div>
-      <span class="academic-year-badge">2026 - 2027 Academic Year</span>
+      <select id="academic-year-select" class="academic-year-select" onchange="changeAcademicYear(this.value)" aria-label="Select Academic Year" title="Select Academic Year Catalog">
+        <option value="2026_2027" selected>2026 - 2027 Academic Year</option>
+        <option value="2025_2026">2025 - 2026 Academic Year</option>
+        <option value="2024_2025">2024 - 2025 Academic Year</option>
+        <option value="2023_2024">2023 - 2024 Academic Year</option>
+        <option value="2022_2023">2022 - 2023 Academic Year</option>
+        <option value="2021_2022">2021 - 2022 Academic Year</option>
+      </select>
     </div>
     <div class="controls-container">
       <div class="search-box">
-        <input type="text" id="search-input" placeholder="Search course (e.g. CS 1101)..." onkeyup="handleSearchInput(event)" autocomplete="off">
+        <input type="text" id="search-input" placeholder="Search for a course (e.g. MA 1022)..." onkeyup="handleSearchInput(event)" autocomplete="off">
         <div id="search-dropdown" class="search-dropdown"></div>
       </div>
-      <div class="toolbar-right-group">
-        <select id="dept-select" class="select-control" onchange="filterDepartment(this.value)">
-          <option value="ALL">All Departments</option>
-          {dept_options_html}
-        </select>
+      <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle Mobile Controls Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div id="toolbar-right-group" class="toolbar-right-group">
         <button id="physics-toggle-btn" class="btn" onclick="togglePhysics()">Animation: OFF</button>
         <button class="btn" onclick="resetView()">Reset View</button>
         <button class="btn" onclick="openHelpModal()">Help</button>
@@ -142,7 +156,7 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
   <div id="main-container">
     <div class="stats-bar">
       <div class="stat-pill">Courses: <span id="stat-courses" class="num">{len(filtered_graph)}</span></div>
-      <div class="stat-pill">Departments: <span id="stat-depts" class="num">{len(depts)}</span></div>
+      <div class="stat-pill">Departments & Programs: <span id="stat-depts" class="num">{len(depts)}</span></div>
       <div class="stat-pill">Prerequisite Links: <span id="stat-links" class="num">{len(edges_js)}</span></div>
     </div>
     <div id="controls-legend-widget" class="controls-legend-widget">
@@ -155,42 +169,57 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
         </button>
       </div>
       <div id="legend-content" class="legend-content">
-        <div class="legend-group">
-          <div class="group-title">Graph Node Colors</div>
-          <div class="legend-items-grid">
-            <div class="legend-item"><span class="color-sample red-sample"></span> <span>Selected</span></div>
-            <div class="legend-item"><span class="color-sample indigo-sample"></span> <span>Prerequisites</span></div>
-            <div class="legend-item"><span class="color-sample sky-sample"></span> <span>Unlocks</span></div>
-            <div class="legend-item"><span class="color-sample white-sample"></span> <span>All Others</span></div>
+        <div class="legend-content-inner">
+          <div class="legend-group">
+            <div class="group-title">Graph Node Colors</div>
+            <div class="legend-items-grid">
+              <div class="legend-item"><span class="color-sample red-sample"></span> <span>Selected</span></div>
+              <div class="legend-item"><span class="color-sample indigo-sample"></span> <span>Prerequisites</span></div>
+              <div class="legend-item"><span class="color-sample sky-sample"></span> <span>Unlocks</span></div>
+              <div class="legend-item"><span class="color-sample white-sample"></span> <span>All Others</span></div>
+            </div>
           </div>
-        </div>
-        <div class="legend-group">
-          <div class="group-title">Canvas Controls</div>
-          <ul class="controls-list">
-            <li><span class="control-key">Left Click</span> Highlight chain</li>
-            <li><span class="control-key">Double Click</span> Isolate view</li>
-            <li><span class="control-key">Right Drag</span> Pan canvas</li>
-            <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
-          </ul>
-        </div>
-        <div class="legend-group keyboard-shortcuts-group">
-          <div class="group-title">Keyboard Shortcuts</div>
-          <ul class="controls-list">
-            <li><span class="control-key">Esc</span> Reset view</li>
-            <li><span class="control-key">P</span> Toggle animation</li>
-            <li><span class="control-key">Space</span> Highlight / Isolate</li>
-            <li><span class="control-key">U</span> Unwind prereqs</li>
-            <li><span class="control-key">?</span> Help modal</li>
-          </ul>
+          <div class="legend-group">
+            <div class="group-title">Canvas Controls</div>
+            <ul class="controls-list">
+              <li><span class="control-key">Left Click</span> Highlight chain</li>
+              <li><span class="control-key">Double Click</span> Isolate view</li>
+              <li><span class="control-key">Right Drag</span> Pan canvas</li>
+              <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
+            </ul>
+          </div>
+          <div class="legend-group keyboard-shortcuts-group">
+            <div class="group-title">Keyboard Shortcuts</div>
+            <ul class="controls-list">
+              <li><span class="control-key">Esc</span> Reset view</li>
+              <li><span class="control-key">P</span> Toggle animation</li>
+              <li><span class="control-key">Space</span> Highlight / Isolate</li>
+              <li><span class="control-key">U</span> Unwind prereqs</li>
+              <li><span class="control-key">?</span> Help modal</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
     <div id="mynetwork"></div>
+
+    <!-- Mobile Drawer Overlay Backdrop -->
+    <div id="mobile-drawer-overlay" class="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
+
+    <!-- Right/Bottom Sidebar Drawer -->
     <aside id="sidebar">
+      <div class="mobile-drawer-handle-bar" onclick="toggleMobileDrawer()">
+        <div class="drawer-drag-pill"></div>
+        <div class="mobile-drawer-title">Course Details & List</div>
+        <button class="mobile-drawer-close-btn" onclick="closeMobileDrawer(event)" aria-label="Close Drawer">&times;</button>
+      </div>
+
       <div class="sidebar-section">
         <div class="section-title-row">
-          <div class="section-title" id="dept-courses-title">Department Courses</div>
-          <button id="dept-show-all-btn" class="btn-xs" style="display: none;">Show All</button>
+          <select id="dept-select" class="dept-select sidebar-dept-select" onchange="filterDepartment(this.value)" aria-label="Filter by Department" title="Filter Graph by Department">
+            <option value="ALL">All Departments and Programs</option>
+            {dept_options_html}
+          </select>
         </div>
         <div id="dept-courses-list" class="dept-courses-list">
           <p class="placeholder-msg">Select a department or click a course to view all courses in that department.</p>
@@ -204,6 +233,11 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
         </div>
       </div>
     </aside>
+
+    <!-- Mobile Floating Action Button (FAB) -->
+    <button id="mobile-fab-details" class="mobile-fab-btn" onclick="toggleMobileDrawer()">
+      <span id="mobile-fab-icon">📋</span> <span id="mobile-fab-label">Course Details & List</span>
+    </button>
   </div>
 
   <!-- Footer Info Bar -->
