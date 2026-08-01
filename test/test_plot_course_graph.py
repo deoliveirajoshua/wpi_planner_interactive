@@ -55,7 +55,10 @@ class TestPlotter(unittest.TestCase):
                 self.assertIn("vis.Network", content)
         finally:
             if os.path.exists(out_file):
-                os.remove(out_file)
+                try:
+                    os.remove(out_file)
+                except OSError:
+                    pass
 
 
 if __name__ == "__main__":

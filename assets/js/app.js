@@ -56,6 +56,261 @@ const COLOR_UNLOCK_DESCENDANT = '#0284c7';  // Ocean Sky Blue for Direct Unlocke
 
 let currentAcademicYearSuffix = '2026_2027';
 
+window.historicalCache = window.historicalCache || {};
+
+const HISTORICAL_YEAR_SUFFIXES = [
+  '2021_2022',
+  '2022_2023',
+  '2023_2024',
+  '2024_2025',
+  '2025_2026',
+  '2026_2027'
+];
+
+const HISTORICAL_YEAR_LABELS = {
+  '2021_2022': '2021–2022',
+  '2022_2023': '2022–2023',
+  '2023_2024': '2023–2024',
+  '2024_2025': '2024–2025',
+  '2025_2026': '2025–2026',
+  '2026_2027': '2026–2027'
+};
+
+async function loadHistoricalCatalog(yearSuffix) {
+  if (window.historicalCache[yearSuffix]) {
+    return window.historicalCache[yearSuffix];
+  }
+
+  if (typeof window.rawHistoricalGraphs !== 'undefined' && window.rawHistoricalGraphs[yearSuffix]) {
+    window.historicalCache[yearSuffix] = parseRawNodeList(window.rawHistoricalGraphs[yearSuffix]);
+    return window.historicalCache[yearSuffix];
+  }
+
+  let fetchUrl = 'data/wpi_course_graph.json';
+  if (yearSuffix !== '2026_2027') {
+    fetchUrl = `data/historical/wpi_course_graph_${yearSuffix}.json`;
+  }
+
+  try {
+    const response = await fetch(fetchUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    window.historicalCache[yearSuffix] = data;
+    return data;
+  } catch (err) {
+    console.warn(`Could not load historical catalog for ${yearSuffix}:`, err);
+    return null;
+  }
+}
+
+async function loadAllHistoricalCatalogs() {
+  for (const ys of HISTORICAL_YEAR_SUFFIXES) {
+    await loadHistoricalCatalog(ys);
+  }
+}
+
+function computeCourseHistoryDiff(courseCode) {
+  const timeline = [];
+  let prevEntry = null;
+
+  HISTORICAL_YEAR_SUFFIXES.forEach(ys => {
+    const catalog = window.historicalCache[ys];
+    const label = HISTORICAL_YEAR_LABELS[ys];
+
+    if (!catalog || !catalog[courseCode]) {
+      if (prevEntry) {
+        timeline.push({
+          year: label,
+          yearSuffix: ys,
+          type: 'removed',
+          text: `Course was omitted or discontinued in the ${label} catalog.`
+        });
+        prevEntry = null;
+      }
+      return;
+    }
+
+    const current = catalog[courseCode];
+    const currentTerms = (current.terms || []).slice().sort().join(', ');
+    const currentPrereqs = (current.prerequisites || []).slice().sort();
+    const currentCredits = current.min_credits || '3.0';
+    const currentName = current.course_name || '';
+
+    if (!prevEntry) {
+      const details = [];
+      if (currentTerms) details.push(`Offered in <strong>${currentTerms}</strong>`);
+      if (currentPrereqs.length > 0) {
+        details.push(`Prerequisites: <strong>${currentPrereqs.join(', ')}</strong>`);
+      } else {
+        details.push(`No formal prerequisites required`);
+      }
+      if (currentCredits) details.push(`Credits: ${currentCredits}`);
+
+      timeline.push({
+        year: label,
+        yearSuffix: ys,
+        type: 'initial',
+        text: `Active in ${label} catalog. ${details.join(' • ')}.`
+      });
+    } else {
+      const changes = [];
+
+      if (currentTerms !== prevEntry.terms) {
+        if (currentTerms && prevEntry.terms) {
+          changes.push(`Terms offered changed from <strong>${prevEntry.terms}</strong> to <strong>${currentTerms}</strong>`);
+        } else if (currentTerms) {
+          changes.push(`Terms offered set to <strong>${currentTerms}</strong>`);
+        } else {
+          changes.push(`Terms offered list cleared`);
+        }
+      }
+
+      const prevPrereqsStr = prevEntry.prereqs.join(', ');
+      const currentPrereqsStr = currentPrereqs.join(', ');
+      if (currentPrereqsStr !== prevPrereqsStr) {
+        const added = currentPrereqs.filter(p => !prevEntry.prereqs.includes(p));
+        const removed = prevEntry.prereqs.filter(p => !currentPrereqs.includes(p));
+
+        const prereqDiffParts = [];
+        if (added.length > 0) prereqDiffParts.push(`added <strong>${added.join(', ')}</strong>`);
+        if (removed.length > 0) prereqDiffParts.push(`removed <strong>${removed.join(', ')}</strong>`);
+
+        if (prereqDiffParts.length > 0) {
+          changes.push(`Prerequisites updated (${prereqDiffParts.join(', ')}). Current: <strong>${currentPrereqsStr || 'None'}</strong>`);
+        }
+      }
+
+      if (currentCredits !== prevEntry.credits) {
+        changes.push(`Credits updated from <strong>${prevEntry.credits}</strong> to <strong>${currentCredits}</strong>`);
+      }
+
+      if (currentName !== prevEntry.name) {
+        changes.push(`Course renamed from <em>"${prevEntry.name}"</em> to <em>"${currentName}"</em>`);
+      }
+
+      if (changes.length > 0) {
+        timeline.push({
+          year: label,
+          yearSuffix: ys,
+          type: 'modified',
+          text: changes.join('. ') + '.'
+        });
+      } else {
+        timeline.push({
+          year: label,
+          yearSuffix: ys,
+          type: 'unchanged',
+          text: `No catalog changes from previous year.`
+        });
+      }
+    }
+
+    prevEntry = {
+      terms: currentTerms,
+      prereqs: currentPrereqs,
+      credits: currentCredits,
+      name: currentName
+    };
+  });
+
+  return timeline;
+}
+
+// Switch academic year catalog and preserve course details + keep History Diff open
+async function switchYearAndPreserveCourse(yearSuffix, courseCode) {
+  await changeAcademicYear(yearSuffix);
+
+  if (rawGraphData && rawGraphData[courseCode]) {
+    currentSelectedCourse = courseCode;
+    renderCourseDetails(rawGraphData[courseCode]);
+
+    // Keep history diff panel open and auto-expanded
+    const container = document.getElementById('course-history-diff-container');
+    const btn = document.getElementById('history-diff-btn');
+    if (container && btn) {
+      container.style.display = 'none';
+      container.classList.remove('expanded');
+      await toggleCourseHistoryDiff(courseCode);
+    }
+  } else {
+    const panel = document.getElementById('details-panel');
+    if (panel) {
+      panel.innerHTML = `
+        <div class="course-card-header">
+          <div class="course-header-top">
+            <div class="course-code-tag">${courseCode}</div>
+          </div>
+          <div class="course-title-text" style="color: var(--wpi-crimson);">Not Active in ${HISTORICAL_YEAR_LABELS[yearSuffix] || yearSuffix} Catalog</div>
+        </div>
+        <p class="placeholder-msg">This course was omitted or discontinued in the ${HISTORICAL_YEAR_LABELS[yearSuffix] || yearSuffix} academic year catalog.</p>
+      `;
+    }
+  }
+}
+
+async function toggleCourseHistoryDiff(courseCode) {
+  const container = document.getElementById('course-history-diff-container');
+  const btn = document.getElementById('history-diff-btn');
+
+  if (!container) return;
+
+  if (container.style.display !== 'none' && container.classList.contains('expanded')) {
+    container.classList.remove('expanded');
+    setTimeout(() => {
+      container.style.display = 'none';
+    }, 250);
+    if (btn) btn.classList.remove('active');
+    return;
+  }
+
+  if (btn) btn.classList.add('active');
+  container.style.display = 'block';
+  container.innerHTML = '<div class="history-diff-loading">📜 Compiling historical catalog diff...</div>';
+
+  try {
+    await loadAllHistoricalCatalogs();
+    const diffTimeline = computeCourseHistoryDiff(courseCode);
+
+    if (!diffTimeline || diffTimeline.length === 0) {
+      container.innerHTML = '<div class="history-diff-empty">No historical catalog changes recorded.</div>';
+    } else {
+      container.innerHTML = `
+        <div class="history-diff-card">
+          <div class="history-diff-header">
+            <span>Historical Catalog Timeline</span>
+            <span class="history-diff-badge">Click year to load canvas graph</span>
+          </div>
+          <ul class="history-diff-timeline">
+            ${diffTimeline.map(item => {
+        const isCurrentActive = (item.yearSuffix === currentAcademicYearSuffix);
+        return `
+                <li class="history-diff-item history-diff-${item.type} ${isCurrentActive ? 'current-active-year' : ''}"
+                    onclick="switchYearAndPreserveCourse('${item.yearSuffix}', '${courseCode}')"
+                    title="Click to load ${item.year} catalog graph and details">
+                  <div class="history-diff-item-header">
+                    <span class="history-year-tag">${item.year}</span>
+                    ${isCurrentActive ? '<span class="active-year-badge">Active Catalog</span>' : '<span class="click-switch-hint">Click to load →</span>'}
+                  </div>
+                  <span class="history-diff-text">${item.text}</span>
+                </li>
+              `;
+      }).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    requestAnimationFrame(() => {
+      container.classList.add('expanded');
+    });
+  } catch (err) {
+    console.error("Error generating history diff:", err);
+    container.innerHTML = `<div class="history-diff-empty">Error generating history diff: ${err.message}</div>`;
+  }
+}
+
 function parseRawNodeList(nodes) {
   const parsed = {};
   nodes.forEach(n => {
@@ -144,6 +399,18 @@ async function initApp() {
     setupNetwork(rawGraphData);
     populateDepartmentSelect(rawGraphData);
     renderDepartmentCourses('ALL', null);
+
+    // Render initial DS 3010 details in sidebar so Course Details and History Diff button are immediately visible
+    if (rawGraphData['DS 3010']) {
+      currentSelectedCourse = 'DS 3010';
+      renderCourseDetails(rawGraphData['DS 3010']);
+    } else {
+      const firstCourse = Object.keys(rawGraphData)[0];
+      if (firstCourse) {
+        currentSelectedCourse = firstCourse;
+        renderCourseDetails(rawGraphData[firstCourse]);
+      }
+    }
 
     // Launch tutorial immediately on site load
     startTutorial();
@@ -827,7 +1094,7 @@ function clearHighlightPath() {
   edgesDataSet.update(edgeUpdates);
 
   if (network) {
-    network.unselect();
+    network.unselectAll();
   }
 
   // Re-enable physics only if physics toggle is ON and returning to unselected main view
@@ -858,7 +1125,7 @@ function handleNetworkSingleClick(params) {
     if (currentSelectedCourse) {
       network.selectNodes([currentSelectedCourse]);
     } else {
-      network.unselect();
+      network.unselectAll();
     }
     return;
   }
@@ -889,7 +1156,7 @@ function handleNetworkDoubleClick(params) {
     if (currentSelectedCourse) {
       network.selectNodes([currentSelectedCourse]);
     } else {
-      network.unselect();
+      network.unselectAll();
     }
     return;
   }
@@ -1168,8 +1435,12 @@ function renderCourseDetails(node) {
     <div class="course-card-header">
       <div class="course-header-top">
         <div class="course-code-tag">${node.course_code}</div>
+        <button id="history-diff-btn" class="btn-xs btn-history-diff" onclick="toggleCourseHistoryDiff('${node.course_code}')" title="Compare catalog changes across 2021–2027">
+          History
+        </button>
       </div>
       <div class="course-title-text">${node.course_name || 'Course Title'}</div>
+      <div id="course-history-diff-container" class="course-history-diff-container" style="display: none;"></div>
       <div class="meta-row">
         <span><strong>Department:</strong> ${node.department_code || 'N/A'}</span>
         <span><strong>Credits:</strong> ${node.min_credits || '3.0'}</span>
@@ -1908,7 +2179,7 @@ const TUTORIAL_STEPS = [
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
     title: 'Welcome to WPI Course Catalog Visualizer',
-    desc: 'Explore WPI’s complete course catalog through an interactive prerequisite network graph map. View course information and visualize course relationships (prerequisites, aliases, etc.).\nNote: For scheduling purposes, use <a href="https://planner.wpi.edu">planner.wpi.edu</a> or <a href="https://courselistings.wpi.edu/search">courselistings.wpi.edu</a>.',
+    desc: 'Explore WPI’s complete course catalog through an interactive map. View course information and course relationships (prerequisites, aliases, etc.).<br><br><strong>Note:</strong> For scheduling, use <a href="https://planner.wpi.edu" target="_blank" rel="noopener">planner.wpi.edu</a> or <a href="https://courselistings.wpi.edu/search" target="_blank" rel="noopener">courselistings.wpi.edu</a>.',
     highlights: [
       { text: 'Visual prerequisite graph with color-coded nodes and connection links.' },
       { text: 'Real-time information that is up-to-date with WPI\'s official course catalog.' }
@@ -1937,7 +2208,7 @@ const TUTORIAL_STEPS = [
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
     title: 'Course Details & Prerequisite Unwinder',
-    desc: 'The right sidebar displays course details for <strong>MA 1024</strong> along with its unwound prerequisite tree. Hover or click over the courses in this sidebar to see their details.',
+    desc: 'The right sidebar displays course details for <strong>MA 1024</strong> along with its unwound prerequisite tree. Hover or click over the courses in this sidebar to see more.',
     highlights: [
       { text: 'View descriptions, credits, prerequisites, and terms offered for the selected course in the sidebar.' },
       { text: '<strong>Show All (Unwind)</strong> displays all upstream prerequisites (Tier 1: MA 1023, Tier 2: MA 1022, Tier 3: MA 1021) needed before enrolling in MA 1024.' }

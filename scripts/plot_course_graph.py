@@ -93,6 +93,41 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
     css_path = os.path.join(base_dir, "assets", "css", "styles.css")
     js_path = os.path.join(base_dir, "assets", "js", "app.js")
 
+    historical_dir = os.path.join(base_dir, "data", "historical")
+    historical_graphs_js = {}
+
+    years_suffixes = ["2021_2022", "2022_2023", "2023_2024", "2024_2025", "2025_2026", "2026_2027"]
+    for ys in years_suffixes:
+        hist_path = os.path.join(historical_dir, f"wpi_course_graph_{ys}.json")
+        if not os.path.exists(hist_path) and ys == "2026_2027":
+            hist_path = os.path.join(base_dir, "data", "wpi_course_graph.json")
+
+        if os.path.exists(hist_path):
+            with open(hist_path, "r", encoding="utf-8") as f:
+                h_graph = json.load(f)
+
+            h_nodes = []
+            for c_code, h_node in h_graph.items():
+                h_nodes.append({
+                    "id": c_code,
+                    "label": c_code,
+                    "title": f"{c_code} - {h_node.get('course_name', '')}",
+                    "department": h_node.get("department_code", "OTHER"),
+                    "name": h_node.get("course_name", ""),
+                    "prerequisites": h_node.get("prerequisites", []),
+                    "prerequisites_structured": h_node.get("prerequisites_structured", []),
+                    "prerequisite_for": h_node.get("prerequisite_for", []),
+                    "aliases": h_node.get("aliases", []),
+                    "course_description": h_node.get("course_description", ""),
+                    "raw_prerequisite_text": h_node.get("raw_prerequisite_text", ""),
+                    "raw_alias_text": h_node.get("raw_alias_text", ""),
+                    "description": h_node.get("raw_prerequisite_text", ""),
+                    "min_credits": h_node.get("min_credits", "3.0"),
+                    "academic_year": h_node.get("academic_year", f"{ys.replace('_', ' - ')} Academic Year"),
+                    "terms": h_node.get("terms", [])
+                })
+            historical_graphs_js[ys] = h_nodes
+
     with open(css_path, "r", encoding="utf-8") as f:
         css_content = f.read()
 
@@ -128,12 +163,12 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
         <p>Worcester Polytechnic Institute</p>
       </div>
       <select id="academic-year-select" class="academic-year-select" onchange="changeAcademicYear(this.value)" aria-label="Select Academic Year" title="Select Academic Year Catalog">
-        <option value="2026_2027" selected>2026 - 2027 Academic Year</option>
-        <option value="2025_2026">2025 - 2026 Academic Year</option>
-        <option value="2024_2025">2024 - 2025 Academic Year</option>
-        <option value="2023_2024">2023 - 2024 Academic Year</option>
-        <option value="2022_2023">2022 - 2023 Academic Year</option>
-        <option value="2021_2022">2021 - 2022 Academic Year</option>
+        <option value="2026_2027" selected> 2026 - 2027 Academic Year </option>
+        <option value="2025_2026"> 2025 - 2026 Academic Year </option>
+        <option value="2024_2025"> 2024 - 2025 Academic Year </option>
+        <option value="2023_2024"> 2023 - 2024 Academic Year </option>
+        <option value="2022_2023"> 2022 - 2023 Academic Year </option>
+        <option value="2021_2022"> 2021 - 2022 Academic Year </option>
       </select>
     </div>
     <div class="controls-container">
@@ -293,6 +328,7 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
   <script type="text/javascript">
     window.rawEmbeddedNodes = {json.dumps(nodes_js, indent=2)};
     window.rawEmbeddedEdges = {json.dumps(edges_js, indent=2)};
+    window.rawHistoricalGraphs = {json.dumps(historical_graphs_js, indent=2)};
   </script>
   <script type="text/javascript">
 {js_content}
