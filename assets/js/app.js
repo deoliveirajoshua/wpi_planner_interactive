@@ -220,33 +220,16 @@ function computeCourseHistoryDiff(courseCode) {
 
 // Switch academic year catalog and preserve course details + keep History Diff open
 async function switchYearAndPreserveCourse(yearSuffix, courseCode) {
-  await changeAcademicYear(yearSuffix);
+  const currentMode = (selectionMode === 'isolated') ? 'isolated' : 'highlight';
+  await changeAcademicYear(yearSuffix, courseCode, currentMode);
 
-  if (rawGraphData && rawGraphData[courseCode]) {
-    currentSelectedCourse = courseCode;
-    renderCourseDetails(rawGraphData[courseCode]);
-
-    // Keep history diff panel open and auto-expanded
-    const container = document.getElementById('course-history-diff-container');
-    const btn = document.getElementById('history-diff-btn');
-    if (container && btn) {
-      container.style.display = 'none';
-      container.classList.remove('expanded');
-      await toggleCourseHistoryDiff(courseCode);
-    }
-  } else {
-    const panel = document.getElementById('details-panel');
-    if (panel) {
-      panel.innerHTML = `
-        <div class="course-card-header">
-          <div class="course-header-top">
-            <div class="course-code-tag">${courseCode}</div>
-          </div>
-          <div class="course-title-text" style="color: var(--wpi-crimson);">Not Active in ${HISTORICAL_YEAR_LABELS[yearSuffix] || yearSuffix} Catalog</div>
-        </div>
-        <p class="placeholder-msg">This course was omitted or discontinued in the ${HISTORICAL_YEAR_LABELS[yearSuffix] || yearSuffix} academic year catalog.</p>
-      `;
-    }
+  // Keep history diff panel open and auto-expanded
+  const container = document.getElementById('course-history-diff-container');
+  const btn = document.getElementById('history-diff-btn');
+  if (container && btn) {
+    container.style.display = 'none';
+    container.classList.remove('expanded');
+    await toggleCourseHistoryDiff(courseCode);
   }
 }
 
@@ -335,7 +318,7 @@ function parseRawNodeList(nodes) {
 }
 
 // Switch Catalog Academic Year Dataset
-async function changeAcademicYear(yearSuffix) {
+async function changeAcademicYear(yearSuffix, targetCourseToPreserve = null, targetSelectionMode = null) {
   currentAcademicYearSuffix = yearSuffix;
 
   const yearSelect = document.getElementById('academic-year-select');
@@ -345,6 +328,11 @@ async function changeAcademicYear(yearSuffix) {
 
   const statsCourses = document.getElementById('stat-courses');
   if (statsCourses) statsCourses.textContent = '...';
+
+  // Determine course and mode to preserve across catalog switch
+  const courseToPreserve = targetCourseToPreserve || currentSelectedCourse;
+  const modeToPreserve = targetSelectionMode || ((selectionMode === 'isolated') ? 'isolated' : (courseToPreserve ? 'highlight' : 'none'));
+  const unwindingToPreserve = showAllPrereqsActive;
 
   try {
     let newData = null;
@@ -367,15 +355,50 @@ async function changeAcademicYear(yearSuffix) {
 
     rawGraphData = newData;
 
-    selectedCourseNode = null;
-    highlightedPathNodes = new Set();
-    isolatedViewActive = false;
-    showAllPrereqsActive = false;
+    if (courseToPreserve && rawGraphData && rawGraphData[courseToPreserve]) {
+      currentSelectedCourse = courseToPreserve;
+      selectionMode = modeToPreserve;
+      showAllPrereqsActive = unwindingToPreserve;
+
+      const dept = rawGraphData[courseToPreserve].department_code || rawGraphData[courseToPreserve].department;
+      if (dept) {
+        const deptSelect = document.getElementById('dept-select');
+        if (deptSelect) deptSelect.value = dept;
+        renderDepartmentCourses(dept, courseToPreserve);
+      } else {
+        renderDepartmentCourses('ALL', courseToPreserve);
+      }
+
+      renderCourseDetails(rawGraphData[courseToPreserve]);
+    } else if (courseToPreserve) {
+      selectionMode = 'none';
+      currentSelectedCourse = null;
+      renderDepartmentCourses('ALL', null);
+      const panel = document.getElementById('details-panel');
+      if (panel) {
+        panel.innerHTML = `
+          <div class="course-card-header">
+            <div class="course-header-top">
+              <div class="course-code-tag">${courseToPreserve}</div>
+              <button id="history-diff-btn" class="btn-xs btn-history-diff" onclick="toggleCourseHistoryDiff('${courseToPreserve}')" title="Compare catalog changes across 2021–2027">
+                History
+              </button>
+            </div>
+            <div class="course-title-text" style="color: var(--wpi-crimson);">Not Active in ${HISTORICAL_YEAR_LABELS[yearSuffix] || yearSuffix} Catalog</div>
+            <div id="course-history-diff-container" class="course-history-diff-container" style="display: none;"></div>
+          </div>
+          <p class="placeholder-msg">This course was omitted or discontinued in the ${HISTORICAL_YEAR_LABELS[yearSuffix] || yearSuffix} academic year catalog.</p>
+        `;
+      }
+    } else {
+      selectionMode = 'none';
+      currentSelectedCourse = null;
+      renderDepartmentCourses('ALL', null);
+    }
 
     populateDepartmentSelect(rawGraphData);
     setupNetwork(rawGraphData);
     renderStats(rawGraphData);
-    renderDepartmentCourses('ALL', null);
   } catch (err) {
     console.error("Error switching academic year catalog:", err);
     alert(`Could not load academic year dataset for ${yearSuffix}.`);
@@ -446,6 +469,7 @@ function renderStats(graphData) {
 
 // Setup Vis.js Network
 function setupNetwork(graphData) {
+  originalNodePositions = {};
   const nodes = [];
   const edges = [];
   const addedEdges = new Set();
@@ -556,8 +580,28 @@ function setupNetwork(graphData) {
 
   network = new vis.Network(container, data, options);
 
+  // Disable physics immediately after initial stabilization, record base positions, & re-apply active selection
   network.once('stabilizationIterationsDone', function () {
     network.setOptions({ physics: { enabled: isPhysicsEnabled } });
+    nodesDataSet.forEach(node => {
+      const pos = network.getPosition(node.id);
+      originalNodePositions[node.id] = { x: pos.x, y: pos.y };
+    });
+
+    if (currentSelectedCourse && rawGraphData && rawGraphData[currentSelectedCourse]) {
+      const dept = rawGraphData[currentSelectedCourse].department_code || rawGraphData[currentSelectedCourse].department;
+      if (dept) {
+        const deptSelect = document.getElementById('dept-select');
+        if (deptSelect) deptSelect.value = dept;
+        renderDepartmentCourses(dept, currentSelectedCourse);
+      }
+
+      if (selectionMode === 'isolated') {
+        highlightCoursePathIsolated(currentSelectedCourse);
+      } else {
+        highlightCoursePathFullView(currentSelectedCourse);
+      }
+    }
   });
 
   // Right-Click Drag Canvas Panning Handler
@@ -597,15 +641,6 @@ function setupNetwork(graphData) {
     if (e.button === 2) {
       isRightDragging = false;
     }
-  });
-
-  // Disable physics immediately after initial stabilization & record base positions
-  network.once('stabilizationIterationsDone', function () {
-    network.setOptions({ physics: { enabled: false } });
-    nodesDataSet.forEach(node => {
-      const pos = network.getPosition(node.id);
-      originalNodePositions[node.id] = { x: pos.x, y: pos.y };
-    });
   });
 
   // Single-Click & Double-Click Dispatchers
@@ -1271,41 +1306,6 @@ function hideBadgeTooltip() {
   if (tooltip) tooltip.style.display = 'none';
 }
 
-// Clean course description by removing prerequisite statements, notes, and restrictions
-function cleanCourseDescription(desc, prereqText, aliasText) {
-  if (!desc) return '';
-  let cleaned = desc.trim();
-
-  const prereqPattern = /(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-].*?(?=\.\s+[A-Z]|\.$|\n|$)/gi;
-  cleaned = cleaned.replace(prereqPattern, '').trim();
-
-  const restrictionPatterns = [
-    /(?:students\s+)?(?:may\s+not|cannot|can\s+not|credit\s+is\s+not\s+allowed)\s+(?:receive\s+credit|allowed)\s+for\s+both\s+.*?(?=\.|\n|$)/gi,
-    /(?:students\s+)?(?:may\s+not|cannot|can\s+not)\s+receive\s+credit\s+for\s+this\s+course\s+if\s+they\s+have\s+taken\s+.*?(?=\.|\n|$)/gi,
-    /replaces\s+.*?(?=\.|\n|$)/gi,
-    /also\s+offered\s+as\s+.*?(?=\.|\n|$)/gi,
-    /cross-listed\s+as\s+.*?(?=\.|\n|$)/gi,
-    /equivalent\s+course\s*:.*?(?=\.|\n|$)/gi
-  ];
-
-  restrictionPatterns.forEach(pat => {
-    cleaned = cleaned.replace(pat, '').trim();
-  });
-
-  if (prereqText && prereqText.length > 5 && cleaned.includes(prereqText.trim())) {
-    cleaned = cleaned.replace(prereqText.trim(), '').trim();
-  }
-
-  if (aliasText && aliasText.length > 5 && cleaned.includes(aliasText.trim())) {
-    cleaned = cleaned.replace(aliasText.trim(), '').trim();
-  }
-
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
-  cleaned = cleaned.replace(/\.\s*\.+$/, '.').trim();
-
-  return cleaned;
-}
-
 // Render Details Sidebar Panel with Visual OR/AND Group Rendering & Tree Unwinder
 function renderCourseDetails(node) {
   const panel = document.getElementById('details-panel');
@@ -1365,32 +1365,35 @@ function renderCourseDetails(node) {
       `).join(' ');
 
       blocksHTML.push(`
-        <div class="prereq-group-box and-group">
-          ${(orGroups.length > 0 || reqCourses.length > 1) ? '<div class="prereq-group-title req-title">Required:</div>' : ''}
+        <div class="prereq-group-box">
+          <div class="prereq-group-title req-title">Required Background:</div>
           <div class="badge-list">${reqBadges}</div>
         </div>
       `);
     }
 
-    orGroups.forEach(courses => {
-      const badges = courses.map(p => `
-        <span class="badge badge-prereq" 
-              onclick="selectCourse('${p}')"
-              onmouseenter="showBadgeTooltip(event, '${p}')"
-              onmousemove="moveBadgeTooltip(event)"
-              onmouseleave="hideBadgeTooltip()">${p}</span>
-      `).join(' <span class="or-divider-badge">OR</span> ');
+    if (orGroups.length > 0) {
+      orGroups.forEach((groupCourses, idx) => {
+        const orBadges = groupCourses.map((p, pIdx) => `
+          <span class="badge badge-prereq" 
+                onclick="selectCourse('${p}')"
+                onmouseenter="showBadgeTooltip(event, '${p}')"
+                onmousemove="moveBadgeTooltip(event)"
+                onmouseleave="hideBadgeTooltip()">${p}</span>
+          ${pIdx < groupCourses.length - 1 ? '<span class="or-divider-badge">OR</span>' : ''}
+        `).join('');
 
-      blocksHTML.push(`
-        <div class="prereq-group-box or-group">
-          <div class="prereq-group-title">Any One Of:</div>
-          <div class="badge-list">${badges}</div>
-        </div>
-      `);
-    });
+        blocksHTML.push(`
+          <div class="prereq-group-box or-group">
+            <div class="prereq-group-title">Any One Of:</div>
+            <div class="badge-list">${orBadges}</div>
+          </div>
+        `);
+      });
+    }
 
     prereqHTML = blocksHTML.join('');
-  } else if ((node.prerequisites || []).length > 0) {
+  } else if (node.prerequisites && node.prerequisites.length > 0) {
     prereqHTML = `
       <div class="badge-list">
         ${node.prerequisites.map(p => `
@@ -1429,7 +1432,7 @@ function renderCourseDetails(node) {
     : '';
 
   const hasPrereqs = (node.prerequisites || []).length > 0;
-  const cleanedDesc = cleanCourseDescription(node.course_description || node.raw_prerequisite_text, node.raw_prerequisite_text, node.raw_alias_text);
+  const rawDescription = (node.course_description || node.description || node.raw_prerequisite_text || '').trim();
 
   panel.innerHTML = `
     <div class="course-card-header">
@@ -1474,24 +1477,12 @@ function renderCourseDetails(node) {
       </div>
     ` : ''}
 
-    ${cleanedDesc ? `
+    ${rawDescription ? `
       <div class="detail-block">
         <div class="detail-block-label">Description</div>
-        <div class="description-text">${cleanedDesc}</div>
-      </div>
-    ` : ''}
-
-    ${node.raw_prerequisite_text ? `
-      <div class="detail-block">
-        <div class="detail-block-label">Prerequisite Statement</div>
-        <div class="description-text">${node.raw_prerequisite_text}</div>
-      </div>
-    ` : ''}
-
-    ${node.raw_alias_text ? `
-      <div class="detail-block">
-        <div class="detail-block-label">Notes & Restrictions</div>
-        <div class="description-text">${node.raw_alias_text}</div>
+        <div class="description-card">
+          <div class="description-text">${rawDescription}</div>
+        </div>
       </div>
     ` : ''}
   `;
@@ -1862,13 +1853,151 @@ function filterDepartment(dept) {
   }
 }
 
+// ============================================================================
+// FUZZY STRING MATCHING & TYPO TOLERANCE SEARCH ENGINE
+// ============================================================================
+
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  if (!a) return b ? b.length : 0;
+  if (!b) return a.length;
+  if (Math.abs(a.length - b.length) > 2) return 999;
+
+  const la = a.length;
+  const lb = b.length;
+  const matrix = [];
+
+  for (let i = 0; i <= lb; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= la; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= lb; i++) {
+    for (let j = 1; j <= la; j++) {
+      const cost = (b.charAt(i - 1) === a.charAt(j - 1)) ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,        // deletion
+        matrix[i][j - 1] + 1,        // insertion
+        matrix[i - 1][j - 1] + cost  // substitution
+      );
+    }
+  }
+  return matrix[lb][la];
+}
+
+function normalizeSearchStr(s) {
+  return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function fuzzyWordMatch(queryWord, targetWord) {
+  const qw = (queryWord || '').toUpperCase();
+  const tw = (targetWord || '').toUpperCase();
+  if (!qw || !tw) return 0.0;
+  if (qw === tw) return 1.0;
+  if (tw.startsWith(qw) || tw.includes(qw)) return 0.9;
+
+  if (qw.length >= 3 && tw.length >= 3) {
+    if (levenshteinDistance(qw, tw) <= 1) return 0.85;
+    if (tw.length >= qw.length && levenshteinDistance(qw, tw.substring(0, qw.length)) <= 1) return 0.8;
+    if (qw.length >= 6 && tw.length >= 6 && levenshteinDistance(qw, tw) <= 2) return 0.75;
+  }
+  return 0.0;
+}
+
+function searchCourseCatalog(query, graphData) {
+  if (!query || !graphData) return [];
+  const qRaw = query.toUpperCase().trim();
+  const qNorm = normalizeSearchStr(qRaw);
+
+  if (qNorm.length < 2 && qRaw.length < 2) {
+    return [];
+  }
+
+  const qWords = qRaw.split(/[^A-Z0-9]+/).filter(w => w.length >= 2);
+  const scored = [];
+
+  Object.values(graphData).forEach(node => {
+    const cCode = (node.course_code || '').toUpperCase().trim();
+    const cName = (node.course_name || '').toUpperCase().trim();
+    const cNorm = normalizeSearchStr(cCode);
+
+    let score = 0;
+
+    // 1. Exact Course Code match (raw or spaceless normalized, e.g. "MA1020" matches "MA 1020")
+    if (cCode === qRaw || (qNorm.length >= 2 && cNorm === qNorm)) {
+      score = 1000;
+    }
+    // 2. Prefix Course Code match (e.g. "MA102" or "CS21")
+    else if (cCode.startsWith(qRaw) || (qNorm.length >= 2 && cNorm.startsWith(qNorm))) {
+      score = 800 + Math.max(0, 10 - cNorm.length);
+    }
+    // 3. Substring Course Code match (e.g. "1020" or "MA10" or "2102")
+    else if (cCode.includes(qRaw) || (qNorm.length >= 2 && cNorm.includes(qNorm))) {
+      score = 700;
+    }
+    // 4. 1-character typo on normalized full course code (e.g. "MA102O", "C2102", "CSS 2102", "CS 210Z")
+    else if (qNorm.length >= 3 && levenshteinDistance(cNorm, qNorm) === 1) {
+      score = 650;
+    }
+    // 5. 1-character typo on normalized code prefix of equal length (e.g. "MA10X" matching "MA 1020")
+    else if (qNorm.length >= 3 && cNorm.length >= qNorm.length && levenshteinDistance(cNorm.substring(0, qNorm.length), qNorm) === 1) {
+      score = 600;
+    }
+    // 6. Title exact phrase match
+    else if (cName && cName.includes(qRaw)) {
+      score = 500;
+    }
+    // 7. Title word matching with typo tolerance (e.g. "calclus", "algoritm", "desgn")
+    else if (qWords.length > 0 && cName) {
+      const nameWords = cName.split(/[^A-Z0-9]+/).filter(w => w.length >= 2);
+      const wordScores = qWords.map(qw => {
+        let best = 0.0;
+        nameWords.forEach(nw => {
+          const s = fuzzyWordMatch(qw, nw);
+          if (s > best) best = s;
+        });
+        return best;
+      });
+
+      const minScore = Math.min(...wordScores);
+      if (wordScores.length > 0 && minScore >= 0.75) {
+        const avg = wordScores.reduce((a, b) => a + b, 0) / wordScores.length;
+        score = 350 + Math.floor(avg * 100);
+      } else if (wordScores.length > 0 && Math.max(...wordScores) >= 0.8) {
+        score = 150 + Math.floor(Math.max(...wordScores) * 100);
+      }
+    }
+
+    if (score > 0) {
+      scored.push({
+        score: score,
+        course_code: node.course_code,
+        course_name: node.course_name,
+        sortWeight: extractCourseSortWeight(node.course_code)
+      });
+    }
+  });
+
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.sortWeight - b.sortWeight;
+  });
+
+  return scored.slice(0, 8);
+}
+
 // IMMEDIATE KEYPRESS NAVIGATION & SEARCH HANDLER
 function handleSearchInput(event) {
   const dropdown = document.getElementById('search-dropdown');
+  const searchInput = document.getElementById('search-input');
+  if (!dropdown || !searchInput) return;
+
   const items = dropdown.querySelectorAll('.search-item');
 
   // Handle ArrowDown on immediate keypress
-  if (event.key === 'ArrowDown') {
+  if (event.type === 'keydown' && event.key === 'ArrowDown') {
     event.preventDefault();
     if (currentSearchMatches.length === 0) return;
     searchSelectedIndex = (searchSelectedIndex + 1) % currentSearchMatches.length;
@@ -1877,7 +2006,7 @@ function handleSearchInput(event) {
   }
 
   // Handle ArrowUp on immediate keypress
-  if (event.key === 'ArrowUp') {
+  if (event.type === 'keydown' && event.key === 'ArrowUp') {
     event.preventDefault();
     if (currentSearchMatches.length === 0) return;
     searchSelectedIndex = (searchSelectedIndex - 1 + currentSearchMatches.length) % currentSearchMatches.length;
@@ -1886,7 +2015,7 @@ function handleSearchInput(event) {
   }
 
   // Handle Enter on immediate keypress
-  if (event.key === 'Enter') {
+  if (event.type === 'keydown' && event.key === 'Enter') {
     event.preventDefault();
     if (searchSelectedIndex >= 0 && searchSelectedIndex < currentSearchMatches.length) {
       selectCourse(currentSearchMatches[searchSelectedIndex].course_code);
@@ -1899,16 +2028,16 @@ function handleSearchInput(event) {
   }
 
   // Handle Escape on immediate keypress
-  if (event.key === 'Escape') {
+  if (event.type === 'keydown' && event.key === 'Escape') {
     dropdown.style.display = 'none';
     searchSelectedIndex = -1;
     return;
   }
 
-  // Character input - evaluate input value on keypress
+  // Character input - evaluate input value on input / keypress
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
-    const query = event.target.value.toUpperCase().trim();
+    const query = searchInput.value.trim();
 
     if (!query || query.length < 2) {
       dropdown.style.display = 'none';
@@ -1917,10 +2046,7 @@ function handleSearchInput(event) {
       return;
     }
 
-    currentSearchMatches = Object.values(rawGraphData).filter(n =>
-      n.course_code.includes(query) || (n.course_name && n.course_name.toUpperCase().includes(query))
-    ).slice(0, 8);
-
+    currentSearchMatches = searchCourseCatalog(query, rawGraphData);
     searchSelectedIndex = -1;
 
     if (currentSearchMatches.length > 0) {
@@ -1933,7 +2059,7 @@ function handleSearchInput(event) {
     } else {
       dropdown.style.display = 'none';
     }
-  }, 100);
+  }, 40);
 }
 
 // Update Active Keyboard Highlight Item
@@ -2179,7 +2305,7 @@ const TUTORIAL_STEPS = [
   {
     iconSvg: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
     title: 'Welcome to WPI Course Catalog Visualizer',
-    desc: 'Explore WPI’s complete course catalog through an interactive map. View course information and course relationships (prerequisites, aliases, etc.).<br><br><strong>Note:</strong> For scheduling, use <a href="https://planner.wpi.edu" target="_blank" rel="noopener">planner.wpi.edu</a> or <a href="https://courselistings.wpi.edu/search" target="_blank" rel="noopener">courselistings.wpi.edu</a>.',
+    desc: 'Explore WPI’s complete course catalog through an interactive map. View course information and course relationships (prerequisites, aliases, etc.).<br><br><strong>Note:</strong> For scheduling, use <a href="https://planner.wpi.edu" target="_blank" rel="noopener">planner.wpi.edu</a> or <a href="https://courselistings.wpi.edu/" target="_blank" rel="noopener">courselistings.wpi.edu</a>.',
     highlights: [
       { text: 'Visual prerequisite graph with color-coded nodes and connection links.' },
       { text: 'Real-time information that is up-to-date with WPI\'s official course catalog.' }

@@ -38,7 +38,7 @@ jobs:
       - name: Scrape & Build Course Graph
         run: |
           python scripts/scraper.py -v
-          python scripts/prerequisite_scraper.py -v
+          python scripts/llm_prerequisite_parser.py -v
           python scripts/wpi_course_graph.py -v
           python scripts/plot_course_graph.py -v
 

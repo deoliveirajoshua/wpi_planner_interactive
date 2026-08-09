@@ -32,7 +32,7 @@
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="assets/css/styles.css?v=2.0">
+  <link rel="stylesheet" href="assets/css/styles.css?v=2.1">
 </head>
 
 <body>
@@ -59,7 +59,7 @@
     <div class="toolbar">
       <div class="search-box">
         <input type="text" id="search-input" placeholder="Search for a course (e.g. MA 1022)..."
-          onkeydown="handleSearchInput(event)">
+          onkeydown="handleSearchInput(event)" oninput="handleSearchInput(event)">
         <div id="search-dropdown" class="search-dropdown"></div>
       </div>
 
@@ -273,7 +273,7 @@
   </footer>
 
   <!-- Application Logic -->
-  <script src="assets/js/app.js?v=2.0"></script>
+  <script src="assets/js/app.js?v=2.1"></script>
 </body>
 
 </html>
