@@ -15,6 +15,8 @@ from prerequisite_scraper import (
     extract_course_codes_from_text,
     parse_prerequisites,
     parse_aliases,
+    clean_category_and_units_metadata,
+    clean_course_description,
     build_course_graph,
     sanitize_and_validate_course_graph,
 )
@@ -197,6 +199,113 @@ class TestPrerequisiteScraper(unittest.TestCase):
         self.assertIn("CS 2103", flawed_graph)
         self.assertIn("CS 2102", flawed_graph["CS 2103"]["aliases"])
 
+    def test_cs4344_complex_prerequisite_structure(self):
+        desc = (
+            "Recommended background: Programming skills equivalent to (CS 1004 or CS 1101 or CS 1102) "
+            "and (CS 2102 or CS2103 or CS 2119); and machine learning equivalent to (DS 3010, CS 4445, or CS4342). "
+            "Units: 1/3 Category: II"
+        )
+        codes, struct, raw = parse_prerequisites(desc)
+        self.assertEqual(len(struct), 3)
+        self.assertTrue(all(g["type"] == "OR" for g in struct))
+        self.assertEqual(set(struct[0]["courses"]), {"CS 1004", "CS 1101", "CS 1102"})
+        self.assertEqual(set(struct[1]["courses"]), {"CS 2102", "CS 2103", "CS 2119"})
+        self.assertEqual(set(struct[2]["courses"]), {"DS 3010", "CS 4445", "CS 4342"})
+
+    def test_cross_listed_twin_courses_alias_linking(self):
+        courses = [
+            {
+                "course_code": "CS 4344",
+                "department_code": "CS",
+                "course_number": "4344",
+                "course_name": "Natural Language Processing: From Foundations to Large Language Models",
+                "course_description": "Sample description."
+            },
+            {
+                "course_code": "DS 4344",
+                "department_code": "DS",
+                "course_number": "4344",
+                "course_name": "Natural Language Processing: From Foundations to Large Language Models",
+                "course_description": "Sample description."
+            }
+        ]
+        graph = build_course_graph(courses)
+        self.assertIn("DS 4344", graph["CS 4344"]["aliases"])
+        self.assertIn("CS 4344", graph["DS 4344"]["aliases"])
+
+    def test_cs4343_all_and_background_prerequisites(self):
+        desc = (
+            "Recommended background: Machine Learning (CS 4342), and knowledge of Linear Algebra "
+            "(such as MA 2071) and Algorithms (such as CS 2223) Units: 1/3 Category: II"
+        )
+        codes, struct, raw = parse_prerequisites(desc)
+        self.assertEqual(set(codes), {"CS 4342", "MA 2071", "CS 2223"})
+        self.assertEqual(len(struct), 3)
+        # All groups must be AND (no OR group created due to 1/3 Units fraction)
+        self.assertTrue(all(g["type"] == "AND" for g in struct))
+
+    def test_clean_category_and_units_metadata_leading(self):
+        self.assertEqual(
+            clean_category_and_units_metadata("Cat. IAn intensive course to introduce Arabic."),
+            "An intensive course to introduce Arabic."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("Cat. I This course continues students exposure."),
+            "This course continues students exposure."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("Cat. 1 This course provides students with an understanding."),
+            "This course provides students with an understanding."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("AE 2210: Introduction to Thermal Engineering (1/3 units; Cat. I) Thermal engineering encompasses."),
+            "Thermal engineering encompasses."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("AB 1600 Moroccan Colloquial Arabic (1/3 Unit; Cat. III) This course presents the rudiments."),
+            "This course presents the rudiments."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("Units 1/3. Computational methods to make informed decisions."),
+            "Computational methods to make informed decisions."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("1/3 Unit. Microcontrollers and electronic circuits for robotics."),
+            "Microcontrollers and electronic circuits for robotics."
+        )
+
+    def test_clean_category_and_units_metadata_trailing(self):
+        self.assertEqual(
+            clean_category_and_units_metadata("Foundational topics in deep learning. Units: 1/3 Category: II"),
+            "Foundational topics in deep learning."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("Statistical inference and modeling. Cat II"),
+            "Statistical inference and modeling."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("Consumer behavior principles. Units: 1/3. Category: Category II"),
+            "Consumer behavior principles."
+        )
+        self.assertEqual(
+            clean_category_and_units_metadata("Fluid dynamics fundamentals. (1/3 Unit; Cat. I)"),
+            "Fluid dynamics fundamentals."
+        )
+
+    def test_clean_course_description_with_category_and_units(self):
+        desc = (
+            "Cat. I This course introduces the object-oriented design paradigm. "
+            "Recommended background: CS 1101 or CS 1102. "
+            "Students cannot receive credit for both CS 2102 and CS 2103. Units: 1/3 Category: I"
+        )
+        p_codes, p_struct, p_raw = parse_prerequisites(desc)
+        a_codes, a_raw = parse_aliases(desc, "CS 2102")
+        cleaned = clean_course_description(desc, p_raw, a_raw)
+        self.assertEqual(
+            cleaned,
+            "This course introduces the object-oriented design paradigm."
+        )
+
 
 class TestLLMPrerequisiteParser(unittest.TestCase):
 
@@ -257,9 +366,19 @@ Hope this helps!"""
                 use_cache=True
             )
             self.assertEqual(len(extractor2.cache), 1)
+            self.assertIn("clean_description", res1)
+            self.assertIn("raw_description", res1)
         finally:
             if os.path.exists(cache_file):
                 os.remove(cache_file)
+
+    def test_llm_extractor_retains_original_and_clean_description(self):
+        desc = "Cat. I This is a test description. Recommended background: CS 1101. Units: 1/3 Category: II"
+        extractor = LLMPrerequisiteExtractor(provider_name="fallback", use_cache=False)
+        result = extractor.extract_course("CS 2102", "Object-Oriented Design", desc)
+        self.assertEqual(result["raw_description"], desc)
+        self.assertNotIn("Cat. I", result["clean_description"])
+        self.assertNotIn("Units: 1/3 Category: II", result["clean_description"])
 
 
 if __name__ == "__main__":

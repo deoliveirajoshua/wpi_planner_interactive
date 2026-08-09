@@ -32,30 +32,42 @@ KNOWN_DEPTS = {
 # ============================================================================
 
 SYSTEM_INSTRUCTION = """You are an academic course catalog parser specialized in Worcester Polytechnic Institute (WPI) curriculum data.
-Your task is to analyze a given course code and its raw course description, then extract all prerequisite requirements and alias/mutual-credit exclusions into a strictly structured JSON format.
+Your task is to analyze a given course code, course name, and raw course description, then extract all prerequisite requirements and alias/mutual-credit exclusions into a strictly structured JSON format.
 
 RULES AND CONVENTIONS:
-1. Prerequisites:
-   - Identify explicit prerequisites and recommended background courses (e.g. "Recommended background:", "Prerequisites:", "Prior knowledge in...", "Recommended Background", "Background:").
-   - Note: Catalog descriptions frequently omit punctuation after background headers (e.g., "Recommended Background Data science basics equivalent to DS 1010..."). Extract these prerequisite clauses accurately.
-   - Group them with logical relationships: "AND" (all required) or "OR" (alternatives/options).
+
+1. Prerequisites & Recommended Background:
+   - Identify explicit prerequisites and recommended background statements (e.g., "Recommended background:", "Prerequisites:", "Prior knowledge in...", "Recommended Background", "Background:").
+   - Catalog descriptions frequently omit punctuation after background headers (e.g., "Recommended Background Data science basics equivalent to DS 1010..."). Extract these clauses accurately.
+   - Phrases like "None", "No prerequisites", "No background required", or "N/A" mean prerequisites is an empty list [].
+
+2. Logical Grouping & Scoping Rules (CRITICAL):
+   - PARENTHESIS SCOPING: Each parenthesized clause represents a distinct, atomic requirement group. NEVER merge multiple parenthesized expressions joined by "and" (e.g., "(CS 1004 or CS 1101 or CS 1102) and (CS 2102 or CS 2103 or CS 2119)") into a single group. They MUST be emitted as separate requirement groups.
+   - OXFORD COMMAS IN OR-LISTS: Expressions such as "(DS 3010, CS 4445, or CS4342)" or "CS 2119, CS 2102/3, or ECE 2039" form ONE single group with type "OR". Do NOT split comma-separated items before an "or" into separate singleton "AND" groups.
+   - TOPIC & SEMICOLON CONJUNCTIONS: Clauses separated by semicolons ";", topic headers, or top-level "and" outside parentheses are separate groups connected with connector "AND".
    - Expand shorthand notations:
      * "CS 2102/3" -> "CS 2102", "CS 2103"
      * "MA 1021/1022" -> "MA 1021", "MA 1022"
      * "CS 1101, 2102, and 2301" -> "CS 1101", "CS 2102", "CS 2301"
      * "PY/RE 1731" -> "PY 1731", "RE 1731"
-   - Phrases like "None", "No prerequisites", or "No background required" mean prerequisites is an empty list [].
+     * "CS/DS 4343" -> "CS 4343", "DS 4343"
 
-2. Aliases and Mutual Credit Restrictions:
+3. Aliases and Mutual Credit Restrictions:
    - Identify cross-listed courses and credit restrictions (e.g., "Students cannot receive credit for both...", "Credit not allowed for both...", "Also offered as...", "Cross-listed as...", "Replaces...").
    - These are ALIASES / MUTUAL EXCLUSIONS, NOT prerequisites.
 
-3. Strict Invariants:
+4. Description Cleaning & Category / Unit Trimming:
+   - "clean_description" MUST have all category/unit metadata stripped.
+   - Strip leading/trailing Category information: e.g. "Cat. I", "Cat. II", "Cat. III", "Cat. 1", "Cat I", "Category: II", "Cat.I".
+   - Strip leading/trailing Unit information: e.g. "Units: 1/3", "1/3 Unit.", "Units 1/3.", "(1/3 Unit; Cat. III)".
+   - Retain all other text in "clean_description".
+
+5. Strict Invariants:
    - A course CANNOT be a prerequisite for itself.
    - An alias CANNOT be listed as a prerequisite.
    - Do NOT include degrees, high school courses, or generic concepts as course codes. Course codes MUST be in standard "DEPT NUM" format (e.g., "CS 2102", "PH 1110", "AR 174X").
 
-4. Output Schema:
+6. Output Schema Documentation:
    Return ONLY valid JSON matching this exact structure:
    {
      "prerequisites": ["DEPT NUM", ...],
@@ -63,15 +75,24 @@ RULES AND CONVENTIONS:
        {
          "type": "AND" or "OR",
          "courses": ["DEPT NUM", ...],
-         "text": "original text snippet of this clause",
+         "text": "exact text snippet of this clause",
          "connector": "AND" or "OR"
        }
      ],
      "raw_prerequisite_text": "extracted snippet containing prerequisite/background statements",
      "aliases": ["DEPT NUM", ...],
      "raw_alias_text": "extracted snippet containing alias/credit restriction statements",
-     "clean_description": "course description with prerequisite and credit restriction statements removed"
+     "clean_description": "course description according to rule 4",
+     "raw_description": "original unedited course description"
    }
+
+   SCHEMA FIELD DISTINCTION:
+   - "type" (Intra-group operator / within this group's "courses" list):
+     * "OR": The student must take ANY ONE course in "courses" (alternative choices / options).
+     * "AND": The student must take ALL courses in "courses" (co-requisites / joint background, e.g. ["MA 2611", "MA 2612"], or a single required course).
+   - "connector" (Inter-group operator / between this group and the next group):
+     * "AND": (Default) Both this requirement group AND the subsequent group are required.
+     * "OR": This entire requirement group is an alternative track/option to the subsequent group.
 """
 
 FEW_SHOT_EXAMPLES = [
@@ -92,7 +113,74 @@ FEW_SHOT_EXAMPLES = [
             "raw_prerequisite_text": "Recommended background: CS 1101 or CS 1102 or equivalent.",
             "aliases": ["CS 2103"],
             "raw_alias_text": "Students cannot receive credit for both CS 2102 and CS 2103.",
-            "clean_description": "Cat. I This course introduces students to the object-oriented design and programming paradigm."
+            "clean_description": "This course introduces students to the object-oriented design and programming paradigm. Recommended background: CS 1101 or CS 1102 or equivalent. Students cannot receive credit for both CS 2102 and CS 2103.",
+            "raw_description": "Cat. I This course introduces students to the object-oriented design and programming paradigm. Recommended background: CS 1101 or CS 1102 or equivalent. Students cannot receive credit for both CS 2102 and CS 2103."
+        }
+    },
+    {
+        "course_code": "CS 4344",
+        "course_name": "Natural Language Processing: From Foundations to Large Language Models",
+        "course_description": "This course introduces the core principles, models, and real-world applications of Natural Language Processing (NLP) and Large Language Models (LLMs) in the context of modern data science. Recommended background: Programming skills equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102 or CS2103 or CS 2119); and machine learning equivalent to (DS 3010, CS 4445, or CS4342). Units: 1/3 Category: II",
+        "expected_output": {
+            "prerequisites": ["CS 1004", "CS 1101", "CS 1102", "CS 2102", "CS 2103", "CS 2119", "CS 4342", "CS 4445", "DS 3010"],
+            "prerequisites_structured": [
+                {
+                    "type": "OR",
+                    "courses": ["CS 1004", "CS 1101", "CS 1102"],
+                    "text": "Programming skills equivalent to (CS 1004 or CS 1101 or CS 1102)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "OR",
+                    "courses": ["CS 2102", "CS 2103", "CS 2119"],
+                    "text": "(CS 2102 or CS2103 or CS 2119)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "OR",
+                    "courses": ["CS 4342", "CS 4445", "DS 3010"],
+                    "text": "machine learning equivalent to (DS 3010, CS 4445, or CS4342)",
+                    "connector": "AND"
+                }
+            ],
+            "raw_prerequisite_text": "Recommended background: Programming skills equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102 or CS2103 or CS 2119); and machine learning equivalent to (DS 3010, CS 4445, or CS4342).",
+            "aliases": [],
+            "raw_alias_text": "",
+            "clean_description": "This course introduces the core principles, models, and real-world applications of Natural Language Processing (NLP) and Large Language Models (LLMs) in the context of modern data science. Recommended background: Programming skills equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102 or CS2103 or CS 2119); and machine learning equivalent to (DS 3010, CS 4445, or CS4342).",
+            "raw_description": "This course introduces the core principles, models, and real-world applications of Natural Language Processing (NLP) and Large Language Models (LLMs) in the context of modern data science. Recommended background: Programming skills equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102 or CS2103 or CS 2119); and machine learning equivalent to (DS 3010, CS 4445, or CS4342). Units: 1/3 Category: II"
+        }
+    },
+    {
+        "course_code": "CS 4343",
+        "course_name": "Deep Learning",
+        "course_description": "This course introduces students to foundational topics in deep learning. Recommended background: Machine Learning (CS 4342), and knowledge of Linear Algebra (such as MA 2071) and Algorithms (such as CS 2223) Units: 1/3 Category: II",
+        "expected_output": {
+            "prerequisites": ["CS 2223", "CS 4342", "MA 2071"],
+            "prerequisites_structured": [
+                {
+                    "type": "AND",
+                    "courses": ["CS 4342"],
+                    "text": "Machine Learning (CS 4342)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "AND",
+                    "courses": ["MA 2071"],
+                    "text": "knowledge of Linear Algebra (such as MA 2071)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "AND",
+                    "courses": ["CS 2223"],
+                    "text": "Algorithms (such as CS 2223)",
+                    "connector": "AND"
+                }
+            ],
+            "raw_prerequisite_text": "Recommended background: Machine Learning (CS 4342), and knowledge of Linear Algebra (such as MA 2071) and Algorithms (such as CS 2223)",
+            "aliases": [],
+            "raw_alias_text": "",
+            "clean_description": "This course introduces students to foundational topics in deep learning. Recommended background: Machine Learning (CS 4342), and knowledge of Linear Algebra (such as MA 2071) and Algorithms (such as CS 2223).",
+            "raw_description": "This course introduces students to foundational topics in deep learning. Recommended background: Machine Learning (CS 4342), and knowledge of Linear Algebra (such as MA 2071) and Algorithms (such as CS 2223) Units: 1/3 Category: II"
         }
     },
     {
@@ -142,7 +230,8 @@ FEW_SHOT_EXAMPLES = [
             "raw_prerequisite_text": "Recommended Background Data science basics equivalent to DS 1010, and modeling equivalent to DS 2010, knowledge of basic statistics equivalent to (MA 2611 and MA 2612), and programming equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102, CS 2103 or CS 2119), as well as databases equivalent to (CS 3431 or MIS 3720) are assumed.",
             "aliases": [],
             "raw_alias_text": "",
-            "clean_description": "Units 1/3. Computational methods to make informed decisions on large datasets."
+            "clean_description": "Computational methods to make informed decisions on large datasets. Recommended Background Data science basics equivalent to DS 1010, and modeling equivalent to DS 2010, knowledge of basic statistics equivalent to (MA 2611 and MA 2612), and programming equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102, CS 2103 or CS 2119), as well as databases equivalent to (CS 3431 or MIS 3720) are assumed.",
+            "raw_description": "Units 1/3. Computational methods to make informed decisions on large datasets. Recommended Background Data science basics equivalent to DS 1010, and modeling equivalent to DS 2010, knowledge of basic statistics equivalent to (MA 2611 and MA 2612), and programming equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102, CS 2103 or CS 2119), as well as databases equivalent to (CS 3431 or MIS 3720) are assumed."
         }
     },
     {
@@ -166,7 +255,7 @@ FEW_SHOT_EXAMPLES = [
                 },
                 {
                     "type": "OR",
-                    "courses": ["CS 2119", "CS 2102", "CS 2103", "CS 2301", "CS 2303", "ECE 2039"],
+                    "courses": ["CS 2102", "CS 2103", "CS 2119", "CS 2301", "CS 2303", "ECE 2039"],
                     "text": "programming experience, such as covered in CS 2119, CS 2102/3, CS 2301/3, or ECE 2039",
                     "connector": "AND"
                 }
@@ -174,7 +263,8 @@ FEW_SHOT_EXAMPLES = [
             "raw_prerequisite_text": "Recommended Background: RBE 1001; fundamentals of electronics, such as found in ECE 2010; and programming experience, such as covered in CS 2119, CS 2102/3, CS 2301/3, or ECE 2039.",
             "aliases": ["ECE 2049"],
             "raw_alias_text": "Credit is not permitted for both RBE 2020 and ECE 2049, regardless of major.",
-            "clean_description": "1/3 Unit. Microcontrollers and electronic circuits for robotic systems management and design."
+            "clean_description": "Microcontrollers and electronic circuits for robotic systems management and design. Credit is not permitted for both RBE 2020 and ECE 2049, regardless of major. Recommended Background: RBE 1001; fundamentals of electronics, such as found in ECE 2010; and programming experience, such as covered in CS 2119, CS 2102/3, CS 2301/3, or ECE 2039.",
+            "raw_description": "1/3 Unit. Microcontrollers and electronic circuits for robotic systems management and design. Credit is not permitted for both RBE 2020 and ECE 2049, regardless of major. Recommended Background: RBE 1001; fundamentals of electronics, such as found in ECE 2010; and programming experience, such as covered in CS 2119, CS 2102/3, CS 2301/3, or ECE 2039."
         }
     },
     {
@@ -187,7 +277,8 @@ FEW_SHOT_EXAMPLES = [
             "raw_prerequisite_text": "There are no prerequisites for the course.",
             "aliases": [],
             "raw_alias_text": "",
-            "clean_description": "Cat. I The course focuses upon the implications of reliance upon markets for the allocation of resources in a society."
+            "clean_description": "The course focuses upon the implications of reliance upon markets for the allocation of resources in a society. There are no prerequisites for the course.",
+            "raw_description": "Cat. I The course focuses upon the implications of reliance upon markets for the allocation of resources in a society. There are no prerequisites for the course."
         }
     },
     {
@@ -213,7 +304,8 @@ FEW_SHOT_EXAMPLES = [
             "raw_prerequisite_text": "Recommended background: ordinary differential equations (MA 2051), dynamics (ES 2503).",
             "aliases": ["ME 3703"],
             "raw_alias_text": "Also offered as ME 3703. Note: Students who previously took AE 3703 will not get credit.",
-            "clean_description": "Cat. I Analysis and design of control systems."
+            "clean_description": "Analysis and design of control systems. Recommended background: ordinary differential equations (MA 2051), dynamics (ES 2503). Also offered as ME 3703. Note: Students who previously took AE 3703 will not get credit.",
+            "raw_description": "Cat. I Analysis and design of control systems. Recommended background: ordinary differential equations (MA 2051), dynamics (ES 2503). Also offered as ME 3703. Note: Students who previously took AE 3703 will not get credit."
         }
     }
 ]
@@ -347,7 +439,8 @@ class RegexFallbackProvider(BaseLLMProvider):
             "raw_prerequisite_text": prereq_raw,
             "aliases": alias_codes,
             "raw_alias_text": alias_raw,
-            "clean_description": clean_desc
+            "clean_description": clean_desc,
+            "raw_description": description.strip()
         }
 
 
@@ -529,13 +622,18 @@ class LLMPrerequisiteExtractor:
                     "connector": "OR" if grp.get("connector", "").upper() == "OR" else "AND"
                 })
 
+        from prerequisite_scraper import clean_category_and_units_metadata
+        raw_clean_desc = result.get("clean_description", "").strip() or description.strip()
+        final_clean_desc = clean_category_and_units_metadata(raw_clean_desc)
+
         entry = {
             "prerequisites": sorted(normalized_prereqs),
             "prerequisites_structured": structured,
             "raw_prerequisite_text": result.get("raw_prerequisite_text", "").strip(),
             "aliases": sorted(normalized_aliases),
             "raw_alias_text": result.get("raw_alias_text", "").strip(),
-            "clean_description": result.get("clean_description", "").strip() or description.strip()
+            "clean_description": final_clean_desc,
+            "raw_description": description.strip()
         }
 
         if self.use_cache:

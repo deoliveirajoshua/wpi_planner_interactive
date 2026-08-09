@@ -2174,3 +2174,14 @@ body.tutorial-step-4-active .sidebar-section.details-section {
   z-index: 2020 !important;
   background-color: #ffffff !important;
 }
+
+
+.wip-banner {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--wpi-crimson);
+  text-align: center;
+  padding: 4px 0;
+  background: var(--wpi-crimson-light);
+  border-bottom: 1px solid var(--wpi-crimson);
+}

@@ -303,10 +303,10 @@ def export_custom_interactive_html(graph_data: Dict[str, Dict[str, Any]], output
         <div class="modal-section">
           <div class="modal-section-title">Keyboard Shortcuts</div>
           <ul class="help-list">
-            <li><strong>Escape:</strong> Reset graph view, department filters, search input, and selection path.</li>
+            <li><strong>Escape:</strong> Reset graph view, filters, search, or course selection.</li>
             <li><strong>P:</strong> Toggle live graph animation / physics simulation ON or OFF.</li>
-            <li><strong>Space:</strong> Toggle between <strong>Highlighted Main View</strong> and <strong>Isolated Focused View</strong> for the selected course.</li>
-            <li><strong>U:</strong> Toggle recursive prerequisite tree unwinding (Show All Prereqs) for the selected course.</li>
+            <li><strong>Space:</strong> Toggle between <strong>Highlighted</strong> and <strong>Isolated</strong> course view.</li>
+            <li><strong>U:</strong> Toggle recursive prerequisite unwinding (Show All Prereqs).</li>
             <li><strong>?:</strong> Open this Help & Controls guide.</li>
           </ul>
         </div>

@@ -7,19 +7,23 @@
   <title>WPI Course Planner & Catalog Visualizer</title>
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="Interactive course planner and prerequisite network visualizer for Worcester Polytechnic Institute (WPI). Explore course offerings, unwind prerequisite chains, and inspect course details.">
-  <meta name="keywords" content="WPI, Worcester Polytechnic Institute, WPI Course Planner, WPI Course Catalog, WPI Prerequisites, Course Visualizer, WPI Schedule, Degree Planning">
+  <meta name="description"
+    content="Interactive course planner and prerequisite network visualizer for Worcester Polytechnic Institute (WPI). Explore course offerings, unwind prerequisite chains, and inspect course details.">
+  <meta name="keywords"
+    content="WPI, Worcester Polytechnic Institute, WPI Course Planner, WPI Course Catalog, WPI Prerequisites, Course Visualizer, WPI Schedule, Degree Planning">
   <meta name="author" content="Joshua DeOliveira">
 
   <!-- Open Graph / Social Sharing Meta Tags -->
   <meta property="og:title" content="WPI Course Planner & Catalog Visualizer">
-  <meta property="og:description" content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses. Explore course offerings, unwind prerequisite chains, and inspect course details.">
+  <meta property="og:description"
+    content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses. Explore course offerings, unwind prerequisite chains, and inspect course details.">
   <meta property="og:type" content="website">
 
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="WPI Course Planner & Catalog Visualizer">
-  <meta name="twitter:description" content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses.">
+  <meta name="twitter:description"
+    content="Interactive prerequisite network visualizer for Worcester Polytechnic Institute (WPI) courses.">
 
   <!-- Modern Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,7 +49,8 @@
         <h1>Course Planner & Catalog Visualizer</h1>
         <p>Worcester Polytechnic Institute</p>
       </div>
-      <select id="academic-year-select" class="academic-year-select" onchange="changeAcademicYear(this.value)" aria-label="Select Academic Year" title="Select Academic Year Catalog">
+      <select id="academic-year-select" class="academic-year-select" onchange="changeAcademicYear(this.value)"
+        aria-label="Select Academic Year" title="Select Academic Year Catalog">
         <option value="2026_2027" selected> 2026 - 2027 Academic Year </option>
         <option value="2025_2026"> 2025 - 2026 Academic Year </option>
         <option value="2024_2025"> 2024 - 2025 Academic Year </option>
@@ -53,6 +58,11 @@
         <option value="2022_2023"> 2022 - 2023 Academic Year </option>
         <option value="2021_2022"> 2021 - 2022 Academic Year </option>
       </select>
+    </div>
+
+    <!-- WIP Notice Banner (toggled by SHOW_WIP_BANNER in app.js) -->
+    <div id="wip-banner" class="wip-banner" style="display: none;">
+      <i>Tool is still &nbsp;<strong>Work-In-Progress</strong>;&nbsp; some information may be incorrect.</i>
     </div>
 
     <!-- Controls Toolbar -->
@@ -114,7 +124,9 @@
               <li><span class="control-key">Left Click</span> Highlight chain</li>
               <li><span class="control-key">Double Click</span> Isolate view</li>
               <li><span class="control-key">Right Drag</span> Pan canvas</li>
-              <li><span class="control-key">Scroll Wheel</span> Zoom in / out</li>
+              <li><span class="control-key">Arrow Keys</span> Pan canvas</li>
+              <li><span class="control-key">Scroll / Pinch</span> Zoom in / out</li>
+              <li><span class="control-key">+ / &minus;</span> Zoom in / out</li>
             </ul>
           </div>
           <div class="legend-group keyboard-shortcuts-group">
@@ -148,7 +160,8 @@
 
       <div class="sidebar-section">
         <div class="section-title-row">
-          <select id="dept-select" class="dept-select sidebar-dept-select" onchange="filterDepartment(this.value)" aria-label="Filter by Department" title="Filter Graph by Department">
+          <select id="dept-select" class="dept-select sidebar-dept-select" onchange="filterDepartment(this.value)"
+            aria-label="Filter by Department" title="Filter Graph by Department">
             <option value="ALL">All Departments and Programs</option>
           </select>
         </div>
@@ -223,26 +236,27 @@
             <li><strong>Double Left-Click:</strong> Double-click any course node to enter the <i>Isolated Focused
                 View</i> (hiding unrelated background nodes and auto-zooming). Click empty space to return to the
               full view with your selection preserved.</li>
-            <li><strong>Pan View:</strong> Hold <i>Right-Click & Drag</i> anywhere on the canvas to move
-              around.</li>
-            <li><strong>Zoom:</strong> Scroll your mouse wheel to zoom in or out.</li>
+            <li><strong>Pan View:</strong> Hold <i>Right-Click &amp; Drag</i> anywhere on the canvas to move
+              around, or use the <strong>Arrow Keys</strong> (↑ ↓ ← →).</li>
+            <li><strong>Zoom:</strong> Scroll your mouse wheel or two-finger swipe on a trackpad to zoom in or out. Use
+              <strong>+</strong>&nbsp;/&nbsp;<strong>−</strong> keys to zoom step by step.
+            </li>
             <li><strong>Department Filter & Show All:</strong> Select a department from the header or click <i>Show
                 All</i> in the sidebar to cluster and zoom into department courses.</li>
             <li><strong>Unwind Prerequisite:</strong> In the details sidebar, click <i>Show All (Unwind)</i>
               to expand the full recursive prerequisite hierarchy tier by tier.</li>
-            <li><strong>Animation Toggle:</strong> Enables graph physics (may slow performance on some systems).
+            <li><strong>Animation Toggle:</strong> Graph physics (may slow performance on some systems).
             </li>
           </ul>
         </div>
         <div class="modal-section">
           <h3>Keyboard Shortcuts</h3>
           <ul class="help-list">
-            <li><strong>Escape:</strong> Reset graph view, department filters, search input, and selection path.</li>
+            <li><strong>Escape:</strong> Reset graph view, filters, search, or course selection.</li>
             <li><strong>P:</strong> Toggle live graph animation / physics simulation ON or OFF.</li>
-            <li><strong>Space:</strong> Toggle between <i>Highlighted Main View</i> and <i>Isolated Focused View</i> for
-              the selected course.</li>
-            <li><strong>U:</strong> Toggle recursive prerequisite tree unwinding (Show All Prereqs) for the selected
-              course.</li>
+            <li><strong>Space:</strong> Toggle between <strong>Highlighted</strong> and <strong>Isolated</strong> course
+              view.</li>
+            <li><strong>U:</strong> Toggle recursive prerequisite unwinding (Show All Prereqs).</li>
             <li><strong>?:</strong> Open this Help & Controls guide.</li>
           </ul>
         </div>

@@ -4,6 +4,11 @@
  * Path Walking & Recursive Prerequisite Tree Unwinding
  */
 
+// ============================================================================
+// FEATURE FLAGS — toggle these to enable/disable site-wide features
+// ============================================================================
+const SHOW_WIP_BANNER = true; // Set false to hide the WIP notice (e.g. for production)
+
 let rawGraphData = {};
 let network = null;
 let nodesDataSet = null;
@@ -19,6 +24,47 @@ let showAllPrereqsActive = false;
 let isPhysicsEnabled = false;
 let selectionMode = 'none'; // 'none' | 'highlight' | 'isolated'
 let netClickTimer = null;
+
+// Canvas Navigation Game-Loop (Arrow Key Pan + Zoom Key Hold)
+const heldNavKeys = new Set();
+let navRafId = null;
+const ARROW_PAN_SPEED = 6;  // canvas-units per frame at scale=1
+const ZOOM_SPEED = 1.022;   // scale multiplier per frame (~3× per second at 60fps)
+
+function navGameLoop() {
+  if (!network || heldNavKeys.size === 0) {
+    navRafId = null;
+    return;
+  }
+  const scale = network.getScale();
+  const pos = network.getViewPosition();
+
+  // Panning
+  const step = ARROW_PAN_SPEED / scale;
+  let dx = 0, dy = 0;
+  if (heldNavKeys.has('arrowleft'))  dx -= step;
+  if (heldNavKeys.has('arrowright')) dx += step;
+  if (heldNavKeys.has('arrowup'))    dy -= step;
+  if (heldNavKeys.has('arrowdown'))  dy += step;
+
+  // Zooming
+  let newScale = scale;
+  const zoomIn  = heldNavKeys.has('+') || heldNavKeys.has('=');
+  const zoomOut = heldNavKeys.has('-');
+  if (zoomIn  && !zoomOut) newScale = scale * ZOOM_SPEED;
+  if (zoomOut && !zoomIn)  newScale = scale / ZOOM_SPEED;
+
+  network.moveTo({
+    position: { x: pos.x + dx, y: pos.y + dy },
+    scale: newScale
+  });
+  navRafId = requestAnimationFrame(navGameLoop);
+}
+
+function startNavLoop(key) {
+  heldNavKeys.add(key);
+  if (!navRafId) navRafId = requestAnimationFrame(navGameLoop);
+}
 
 // ============================================================================
 // CENTRAL PHYSICS CONFIGURATION
@@ -438,6 +484,10 @@ async function initApp() {
     // Launch tutorial immediately on site load
     startTutorial();
 
+    // WIP Banner — controlled by SHOW_WIP_BANNER feature flag
+    const wipBanner = document.getElementById('wip-banner');
+    if (wipBanner) wipBanner.style.display = SHOW_WIP_BANNER ? 'flex' : 'none';
+
     // Hide search dropdown on click outside
     document.addEventListener('click', function (e) {
       const searchBox = document.querySelector('.search-box');
@@ -642,6 +692,17 @@ function setupNetwork(graphData) {
       isRightDragging = false;
     }
   });
+
+  // Smooth Scroll-Wheel Zoom (trackpad-friendly)
+  // Plain scroll = zoom canvas; Ctrl/Cmd+scroll = let browser handle it
+  container.addEventListener('wheel', function (e) {
+    if (e.ctrlKey || e.metaKey) return; // Let browser handle pinch-to-zoom / Ctrl+scroll
+    e.preventDefault();
+    if (!network) return;
+    const zoomFactor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
+    const currentScale = network.getScale();
+    network.moveTo({ scale: currentScale * zoomFactor });
+  }, { passive: false });
 
   // Single-Click & Double-Click Dispatchers
   network.on('click', function (params) {
@@ -1431,8 +1492,14 @@ function renderCourseDetails(node) {
       `).join('')
     : '';
 
+
+
   const hasPrereqs = (node.prerequisites || []).length > 0;
-  const rawDescription = (node.course_description || node.description || node.raw_prerequisite_text || '').trim();
+  // TODO: Shows raw prerequisite text first for now while debuggin LLM extraction
+  const rawDescription = (node.raw_description || '').trim();
+  // TODO: Shows cleaned course description (swap with raw_description when ready)
+  //const rawDescription = (node.clean_description || '').trim();
+  // const rawDescription = (node.course_description || node.description || node.raw_prerequisite_text || '').trim();
 
   panel.innerHTML = `
     <div class="course-card-header">
@@ -2173,7 +2240,7 @@ document.addEventListener('keydown', function (e) {
   const isHelpActive = helpOverlay && helpOverlay.classList.contains('active');
   const isTutorialActive = tutorialOverlay && tutorialOverlay.classList.contains('active');
 
-  // Modal active keyboard controls
+  // Modal active keyboard controls (allow auto-repeat for arrow nav in tutorial)
   if (isTutorialActive) {
     if (e.key === 'ArrowRight' || e.key === 'Enter') {
       if (tutorialCurrentStep === TUTORIAL_STEPS.length - 1) {
@@ -2209,6 +2276,15 @@ document.addEventListener('keydown', function (e) {
   // Main Canvas & App Keyboard Shortcuts
   const key = e.key.toLowerCase();
 
+  // Continuous-action keys: handled by the nav game loop — allow through regardless of e.repeat
+  const isContinuousKey = (
+    e.key === '+' || e.key === '=' || e.key === '-' ||
+    ['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(key)
+  );
+
+  // One-shot toggle keys: skip OS auto-repeat entirely
+  if (!isContinuousKey && e.repeat) return;
+
   // Reset View: ONLY Escape
   if (e.key === 'Escape') {
     e.preventDefault();
@@ -2242,6 +2318,29 @@ document.addEventListener('keydown', function (e) {
     e.preventDefault();
     openHelpModal();
   }
+  // Zoom In: '+' or '=' — game loop
+  else if (e.key === '+' || e.key === '=') {
+    e.preventDefault();
+    startNavLoop(e.key === '+' ? '+' : '=');
+  }
+  // Zoom Out: '-' — game loop
+  else if (e.key === '-') {
+    e.preventDefault();
+    startNavLoop('-');
+  }
+  // Arrow Key Panning — game loop
+  else if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(key)) {
+    e.preventDefault();
+    startNavLoop(key);
+  }
+});
+
+// Stop panning/zooming when keys are released
+document.addEventListener('keyup', function (e) {
+  const key = e.key.toLowerCase();
+  heldNavKeys.delete(key);
+  // Also clear the raw key variants for +/=/- which don't lowercase
+  heldNavKeys.delete(e.key);
 });
 
 // Toggle Live Graph Physics
@@ -2327,8 +2426,8 @@ const TUTORIAL_STEPS = [
     highlights: [
       { text: '<strong>Left-Click:</strong> Highlights prerequisites (indigo) and unlocked courses (blue).' },
       { text: '<strong>Double Left-Click:</strong> Temporarily hides all unrelated courses from view.' },
-      { text: '<strong>Hold Right-Click & Drag:</strong> Pan around the graph.' },
-      { text: '<strong>Scroll Wheel:</strong> Zoom in and out.' }
+      { text: '<strong>Hold Right-Click &amp; Drag</strong> or <strong>Arrow Keys ↑↓←→:</strong> Pan around the graph.' },
+      { text: '<strong>Scroll / Two-Finger Swipe</strong> or <strong>+ / − Keys:</strong> Zoom in and out.' }
     ]
   },
   {

@@ -114,10 +114,10 @@ def parse_prerequisites(description: str, valid_codes: Set[str] = None) -> Tuple
 
     # Check for explicit negative background statements first
     neg_patterns = [
-        r'recommended\s+background\s*[:\-]?\s*none\b',
-        r'no\s+prerequisites\s+(?:are\s+suggested|are\s+required|suggested|required)',
-        r'there\s+are\s+no\s+prerequisites',
-        r'recommended\s+background\s*[:\-]?\s*no\s+prerequisites'
+        r'recommended\s+background\s*[:\-]?\s*none[^.]*\.?',
+        r'no\s+prerequisites\s+(?:are\s+suggested|are\s+required|suggested|required)[^.]*\.?',
+        r'(?:there\s+are\s+)?no\s+prerequisites[^.]*\.?',
+        r'recommended\s+background\s*[:\-]?\s*no\s+prerequisites[^.]*\.?'
     ]
     for np in neg_patterns:
         if re.search(np, description, re.IGNORECASE):
@@ -129,7 +129,7 @@ def parse_prerequisites(description: str, valid_codes: Set[str] = None) -> Tuple
             if not codes_in_neg:
                 return [], [], raw_snippet
 
-    prereq_pattern = r'(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-]?(?:\s+|\b)(.*?)(?=\.\s+[A-Z]|\.\s*Students|\.\s*~Note|\.$|\n|$)'
+    prereq_pattern = r'(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-]?(?:\s+|\b)(.*?)(?=\.\s+[A-Z]|\.\s*Students|\.\s*~Note|\bUnits\s*:|\bCat(?:egory)?\.?|\.$|\n|$)'
     m = re.search(prereq_pattern, description, re.IGNORECASE)
 
     if not m:
@@ -137,6 +137,8 @@ def parse_prerequisites(description: str, valid_codes: Set[str] = None) -> Tuple
 
     raw_snippet = m.group(0).strip()
     body_text = m.group(2).strip()
+    # Strip any trailing metadata like "Units: 1/3" or "Category: II"
+    body_text = re.split(r'\b(?:Units\s*:|Cat(?:egory)?\s*[:\.]|Category\b)', body_text, flags=re.IGNORECASE)[0].strip()
 
     # If body is simply 'None'
     if re.match(r'^(?:none|no prerequisites|n/a)\.?$', body_text, re.IGNORECASE):
@@ -146,11 +148,53 @@ def parse_prerequisites(description: str, valid_codes: Set[str] = None) -> Tuple
     clean_body_text = re.sub(r'\(.*?\)', '', body_text)
     has_explicit_top_or = bool(re.search(r'\bor\b', clean_body_text, re.IGNORECASE)) and ("and" not in clean_body_text.lower() and ";" not in clean_body_text)
 
-    # Split body into clauses on ';', newlines, or commas separating topics
-    raw_clauses = re.split(r';|\n|,\s*and\b|;\s*and\b|,\s*(?=[a-zA-Z])', body_text, flags=re.IGNORECASE)
+    # Smart parenthesis-aware clause splitting (respects parentheses and Oxford commas)
+    raw_clauses = []
+    current_clause = []
+    paren_depth = 0
+    i = 0
+    n = len(body_text)
+
+    while i < n:
+        char = body_text[i]
+        if char == '(':
+            paren_depth += 1
+            current_clause.append(char)
+            i += 1
+        elif char == ')':
+            paren_depth = max(0, paren_depth - 1)
+            current_clause.append(char)
+            i += 1
+            # Check if followed by top-level separator
+            m_sep = re.match(r'^\s*(?:,\s*and\b|;\s*and\b|,\s*as well as\b|;\s*as well as\b|\band\b|;|,|\n)', body_text[i:], re.IGNORECASE)
+            if m_sep and paren_depth == 0:
+                raw_clauses.append(''.join(current_clause).strip())
+                current_clause = []
+                i += len(m_sep.group(0))
+        elif paren_depth == 0:
+            if char in (';', '\n'):
+                raw_clauses.append(''.join(current_clause).strip())
+                current_clause = []
+                i += 1
+            else:
+                m_sep = re.match(r'^(?:,\s*and\b|;\s*and\b|,\s*as well as\b|;\s*as well as\b)', body_text[i:], re.IGNORECASE)
+                if m_sep:
+                    raw_clauses.append(''.join(current_clause).strip())
+                    current_clause = []
+                    i += len(m_sep.group(0))
+                else:
+                    current_clause.append(char)
+                    i += 1
+        else:
+            current_clause.append(char)
+            i += 1
+
+    if current_clause:
+        raw_clauses.append(''.join(current_clause).strip())
 
     structured_groups = []
     all_codes_set = set()
+    course_slash_pat = r'\b[A-Za-z]{2,4}\s*\d{3,4}/\d{1,4}\b|\b[A-Za-z]{2,4}/[A-Za-z]{2,4}\s*\d{3,4}\b|\b\d{4}\s*/\s*\d{4}\b'
 
     for clause in raw_clauses:
         clause_codes = extract_course_codes_from_text(clause, valid_codes)
@@ -159,8 +203,8 @@ def parse_prerequisites(description: str, valid_codes: Set[str] = None) -> Tuple
 
         all_codes_set.update(clause_codes)
 
-        # Check if clause contains slash pattern (e.g. PH 1110 / 1111) or 'or'
-        has_slash = "/" in clause
+        # Check if clause contains course code slash pattern (e.g. PH 1110 / 1111, CS 2102/3) or whole-word 'or'
+        has_slash = bool(re.search(course_slash_pat, clause))
         has_or = bool(re.search(r'\bor\b', clause, re.IGNORECASE)) or has_slash
 
         group_type = "OR" if (has_or and len(clause_codes) > 1) else "AND"
@@ -187,7 +231,7 @@ def parse_aliases(description: str, current_code: str, valid_codes: Set[str] = N
     raw_texts = []
 
     patterns = [
-        r'(?:credit\s+is\s+not\s+allowed|cannot\s+receive\s+credit|may\s+not\s+receive\s+credit|will\s+not\s+get\s+credit)\s+for\s+both\s+[^.]+',
+        r'(?:credit\s+is\s+not\s+allowed|credit\s+is\s+not\s+permitted|cannot\s+receive\s+credit|may\s+not\s+receive\s+credit|will\s+not\s+get\s+credit)\s+for\s+both\s+[^.]+',
         r'replaces\s+[^.]+',
         r'(?:students\s+)?(?:may\s+not|cannot|can\s+not|will\s+not\s+get)\s+receive\s+credit\s+for\s+both\s+[^.]+',
         r'(?:students\s+)?(?:may\s+not|cannot|can\s+not|will\s+not)\s+(?:receive\s+credit|get\s+credit)\s+for\s+this\s+course\s+if\s+they\s+have\s+taken\s+[^.]+',
@@ -212,23 +256,69 @@ def parse_aliases(description: str, current_code: str, valid_codes: Set[str] = N
     return sorted(list(alias_set)), raw_snippet
 
 
+def clean_category_and_units_metadata(text: str) -> str:
+    """
+    Remove leading and trailing Category (e.g. Cat. I, Cat. II, Cat III) and
+    Units metadata (e.g. Units: 1/3, 1/3 Unit, (1/3 Unit; Cat. III)) from course descriptions.
+    """
+    if not text:
+        return ""
+    t = text.strip()
+
+    # 1. Strip leading course title / code header prefixes if present, e.g.
+    # 'AB 1600 Moroccan Colloquial Arabic (1/3 Unit; Cat. III)' or 'AE 2210: Introduction to Thermal Engineering (1/3 units; Cat. I)'
+    t = re.sub(r'^[A-Z]{2,4}\s*\d{3,4}[A-Z]?(?:\s*[:\-])?[^(\n]*?\(\s*(?:\d+/\d+\s*units?|units?\s*:\s*\d+/\d+)?\s*(?:[;,]\s*)?(?:Cat(?:\.|egory)?\s*[I|V|X|0-9]+)?\s*\)\s*', '', t, flags=re.IGNORECASE).strip()
+
+    # 2. Strip leading parenthesized or bare unit / category tags: '(1/3 Unit; Cat. III)', '(Cat. I)', 'Units 1/3.', '1/3 Unit.'
+    t = re.sub(r'^\(\s*(?:\d+/\d+\s*units?|units?\s*:\s*\d+/\d+)?\s*(?:[;,]\s*)?(?:Cat(?:\.|egory)?\s*[I|V|X|0-9]+)?\s*\)\s*', '', t, flags=re.IGNORECASE).strip()
+    t = re.sub(r'^(?:(?:Units?\s*(?:[:\s]\s*)?)?\d+/\d+\s*units?\.?\s*)', '', t, flags=re.IGNORECASE).strip()
+    t = re.sub(r'^(?:Units?\s*(?:[:\s]\s*)?\d+/\d+\.?\s*)', '', t, flags=re.IGNORECASE).strip()
+
+    # 3. Strip leading Category tags: 'Cat. I', 'Cat. I.', 'Cat.I', 'Cat I', 'Cat. 1', 'Category I', etc.
+    t = re.sub(r'^Cat(?:\.|egory)?\s*[:\.]?\s*(?:Category\s*)?(?:[I|V|X|0-9]+)\.?\s*', '', t, flags=re.IGNORECASE).strip()
+
+    # 4. Strip trailing Unit & Category metadata:
+    # e.g., 'Units: 1/3 Category: II', 'Units: 1/3. Category: Category II', 'Cat I', 'Cat. II', '(1/3 Unit; Cat. I)'
+    t = re.sub(r'\s*\(\s*(?:\d+/\d+\s*units?|units?\s*:\s*\d+/\d+)?\s*(?:[;,]\s*)?(?:Cat(?:\.|egory)?\s*[I|V|X|0-9]+)?\s*\)\s*\.?$', '', t, flags=re.IGNORECASE).strip()
+    t = re.sub(r'\.?\s*Units?\s*(?:[:\s]\s*)?\d+/\d+\.?\s*(?:[;,]\s*|\.\s*|\s+)?(?:Cat(?:\.|egory)?\s*(?:[:\.]\s*)?(?:Category\s*)?[I|V|X|0-9]+)?\s*\.?$', '', t, flags=re.IGNORECASE).strip()
+    t = re.sub(r'\.?\s*Cat(?:\.|egory)?\s*(?:[:\.]\s*)?(?:Category\s*)?[I|V|X|0-9]+\.?\s*(?:[;,]\s*|\.\s*|\s+)?(?:Units?\s*(?:[:\s]\s*)?\d+/\d+\.?)?\s*\)?\s*\.?$', '', t, flags=re.IGNORECASE).strip()
+    t = re.sub(r'\.?\s*Cat(?:\.|egory)?\s*[:\.]?\s*(?:Category\s*)?(?:[I|V|X|0-9]+)\.?\s*$', '', t, flags=re.IGNORECASE).strip()
+    t = re.sub(r'\.?\s*Units?\s*[:\s]\s*\d+/\d+\.?\s*$', '', t, flags=re.IGNORECASE).strip()
+
+    # Final cleanup of punctuation and whitespace
+    t = re.sub(r'\s+', ' ', t).strip()
+    t = re.sub(r'(\.\s*){2,}', '. ', t).strip()
+    t = re.sub(r'^[,\.;:\s]+', '', t).strip()
+    if t and not t.endswith(('.', '!', '?')):
+        t += '.'
+    return t
+
+
 def clean_course_description(description: str, prereq_raw: str = "", alias_raw: str = "") -> str:
     """
-    Remove prerequisite statements, notes, and credit restrictions from course description text.
+    Remove prerequisite statements, notes, credit restrictions, and category/unit metadata from course description text.
     """
     if not description:
         return ""
 
     text = description.strip()
 
-    prereq_pattern = r'(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-].*?(?=\.\s+[A-Z]|\.\s*Students|\.\s*~Note|\.$|\n|$)'
-    text = re.sub(prereq_pattern, '', text, flags=re.IGNORECASE).strip()
+    if prereq_raw and prereq_raw.strip() in text:
+        text = text.replace(prereq_raw.strip(), '').strip()
+    
+    prereq_patterns = [
+        r'(?:recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-]?\s*(?:none\b|no\s+prerequisites\b)[^.]*\.?',
+        r'(?:there\s+are\s+)?no\s+prerequisites[^.]*\.?',
+        r'(?:recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-].*?(?=\.\s+[A-Z]|\.\s*Students|\.\s*~Note|\bUnits\s*:|\bCat(?:egory)?\.?|\.$|\n|$)'
+    ]
+    for pp in prereq_patterns:
+        text = re.sub(pp, '', text, flags=re.IGNORECASE).strip()
 
     restriction_patterns = [
-        r'(?:students\s+)?(?:may\s+not|cannot|can\s+not|credit\s+is\s+not\s+allowed)\s+(?:receive\s+credit|allowed)\s+for\s+both\s+.*?(?=\.|\n|$)',
-        r'(?:students\s+)?(?:may\s+not|cannot|can\s+not)\s+receive\s+credit\s+for\s+this\s+course\s+if\s+they\s+have\s+taken\s+.*?(?=\.|\n|$)',
-        r'(?:students\s+who\s+previously\s+took\s+.*?\s+will\s+not\s+get\s+credit.*?(?=\.|\n|$))',
-        r'(?:students\s+who\s+have\s+received\s+credit\s+for\s+.*?\s+may\s+not\s+receive\s+credit.*?(?=\.|\n|$))',
+        r'(?:Additionally,\s*|Note:\s*|Note\s+that\s+)?(?:students\s+)?(?:may\s+not|cannot|can\s+not|credit\s+is\s+not\s+allowed|credit\s+is\s+not\s+permitted)\s+(?:for\s+both|receive\s+credit|allowed|permitted)\s+.*?(?=\.|\n|$)',
+        r'(?:Additionally,\s*|Note:\s*|Note\s+that\s+)?(?:students\s+)?(?:may\s+not|cannot|can\s+not)\s+receive\s+credit\s+for\s+this\s+course\s+if\s+they\s+have\s+taken\s+.*?(?=\.|\n|$)',
+        r'(?:Additionally,\s*|Note:\s*|Note\s+that\s+)?(?:students\s+who\s+previously\s+took\s+.*?\s+will\s+not\s+get\s+credit.*?(?=\.|\n|$))',
+        r'(?:Additionally,\s*|Note:\s*|Note\s+that\s+)?(?:students\s+who\s+have\s+received\s+credit\s+for\s+.*?\s+may\s+not\s+receive\s+credit.*?(?=\.|\n|$))',
         r'replaces\s+.*?(?=\.|\n|$)',
         r'also\s+offered\s+as\s+.*?(?=\.|\n|$)',
         r'cross-listed\s+as\s+.*?(?=\.|\n|$)',
@@ -237,15 +327,11 @@ def clean_course_description(description: str, prereq_raw: str = "", alias_raw: 
     for pat in restriction_patterns:
         text = re.sub(pat, '', text, flags=re.IGNORECASE).strip()
 
-    if prereq_raw and prereq_raw.strip() in text:
-        text = text.replace(prereq_raw.strip(), '').strip()
-
     if alias_raw and alias_raw.strip() in text:
         text = text.replace(alias_raw.strip(), '').strip()
 
-    text = re.sub(r'\s+', ' ', text).strip()
-    text = re.sub(r'(\.\s*){2,}', '. ', text).strip()
-    text = re.sub(r'\.\s*\.+$', '.', text).strip()
+    text = re.sub(r'(?:Additionally,\s*|Note:\s*|Note\s+that\s*)+(?=[,\.;:\s]|\.|$)', '', text, flags=re.IGNORECASE).strip()
+    text = clean_category_and_units_metadata(text)
     return text
 
 
@@ -268,6 +354,22 @@ def sanitize_and_validate_course_graph(graph: Dict[str, Dict[str, Any]], verbose
         for n in graph.values()
         if n.get("department_code") and n.get("department_name")
     }
+
+    # Pass 0: Catalog-wide Cross-Listing Resolution (identical title & course number across departments)
+    from collections import defaultdict
+    by_title_num = defaultdict(list)
+    for code, node in graph.items():
+        name = node.get("course_name", "").strip().lower()
+        num = node.get("course_number", "").strip().lower()
+        if name and num:
+            by_title_num[(name, num)].append(code)
+
+    for (name, num), twin_codes in by_title_num.items():
+        if len(twin_codes) > 1:
+            for c1 in twin_codes:
+                for c2 in twin_codes:
+                    if c1 != c2 and c2 not in graph[c1].get("aliases", []):
+                        graph[c1].setdefault("aliases", []).append(c2)
 
     # Pass 1: Self-Prerequisite & Self-Alias Purge + Alias-Prerequisite Separation
     for code, node in list(graph.items()):
@@ -430,7 +532,9 @@ def build_course_graph(
             "department_code": c.get("department_code", ""),
             "department_name": c.get("department_name", ""),
             "course_number": c.get("course_number", ""),
-            "course_description": desc,
+            "course_description": clean_desc or desc,
+            "clean_description": clean_desc,
+            "raw_description": desc,
             "min_credits": c.get("min_credits", ""),
             "max_credits": c.get("max_credits", ""),
             "academic_year": c.get("academic_year", "2026 - 2027 Academic Year"),
