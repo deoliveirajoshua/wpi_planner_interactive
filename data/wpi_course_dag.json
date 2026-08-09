@@ -14,7 +14,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in Arabic",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -95,7 +95,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background; this course is closed to native speakers of Arabic and heritage speakers except with written permission from the instructor",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -4975,7 +4975,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Prerequisites will vary with topic",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -5014,7 +5014,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Recommended background: prior knowledge of college-level chemistry and physics",
+    "raw_prerequisite_text": "background for all science and engineering disciplines regarding the capabilities and limitations of materials relevant to the development of medical devices",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -6169,9 +6169,38 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "BB 3101",
+      "CH 1010",
+      "ES 2001"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "BB 3101"
+        ],
+        "text": "BB 3101 or equivalent Human Anatomy and Physiology",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 1010"
+        ],
+        "text": "CH 1010 or equivalent General Chemistry",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "ES 2001"
+        ],
+        "text": "ES 2001 or equivalent Introduction to Materials Science and Engineering",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background BB 3101 or equivalent Human Anatomy and Physiology, CH 1010 or equivalent General Chemistry, ES 2001 or equivalent Introduction to Materials Science and Engineering, and basic mathematics through differential and integral calculus",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -6439,7 +6468,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background for advanced work in biomedical engineering",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -7185,7 +7214,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background for this course",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -7337,20 +7366,9 @@
     "terms": [
       "C"
     ],
-    "prerequisites": [
-      "ES 3004"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "ES 3004"
-        ],
-        "text": "ES 3004",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: ES 3004",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background for applying the principles of fluid mechanics to analyze and design hydraulic and fluid flow systems for projects related to water resources and civil and environmental engineering",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -7533,20 +7551,9 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [
-      "ES 3004"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "ES 3004"
-        ],
-        "text": "ES 3004",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: ES 3004",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background for quantifying hydrologic processes as required for the development of water resources projects",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -8351,40 +8358,9 @@
     "terms": [
       "C"
     ],
-    "prerequisites": [
-      "CH 1010",
-      "CH 1020",
-      "CH 1030",
-      "CH 1040"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "CH 1010"
-        ],
-        "text": "Fundamentals of chemistry (see CH 1010",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "CH 1020"
-        ],
-        "text": "CH 1020",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "CH 1030",
-          "CH 1040"
-        ],
-        "text": "CH 1030) and chemical characterization techniques (see CH1040)",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: Fundamentals of chemistry (see CH 1010, CH 1020, CH 1030) and chemical characterization techniques (see CH1040), basic chemistry laboratory techniques (e.g., basic chemical synthesis, spectral analysis and chemical separation skills)",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in methods of organic synthesis and characterization",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -8520,9 +8496,74 @@
     "terms": [
       "B"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "CH 1010",
+      "CH 1020",
+      "CH 1030",
+      "CH 1040",
+      "CH 2310",
+      "CH 2320",
+      "CH 2330"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "CH 1010"
+        ],
+        "text": "CH 1010",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 1020"
+        ],
+        "text": "CH 1020",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 1030"
+        ],
+        "text": "CH 1030",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 1040"
+        ],
+        "text": "CH 1040",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 2310"
+        ],
+        "text": "CH 2310",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 2320"
+        ],
+        "text": "CH 2320",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 2330"
+        ],
+        "text": "CH 2330",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "background for this sequence, CH 1010, CH 1020, CH 1030, CH 1040, CH 2310, CH 2320, and CH 2330, or their equivalents, are recommended",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -8995,7 +9036,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background at the introductory level in quantum mechanics is highly desirable",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -9570,7 +9611,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background required to solve chemical engineering problems in fields such as fluid mechanics, reactor design, thermodynamics, and process design",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -9609,7 +9650,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in calculus",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -9647,7 +9688,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background at the introductory level in quantum mechanics is highly desirable",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -9706,7 +9747,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background required for analysis ofcomplex problems",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -9746,7 +9787,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in Chinese",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -10055,9 +10096,20 @@
       "A",
       "C"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "RBE 1001"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "RBE 1001"
+        ],
+        "text": "for RBE 1001",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "background for RBE 1001",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -11704,7 +11756,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Prerequisite: an undergraduate course in discrete mathematics.)",
+    "raw_prerequisite_text": "background assumptions",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -12553,7 +12605,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background, students should have experience writing programs in a recursive, high-level language and should have the background in mathematics that could be expected from a BS in Computer Science",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -12672,7 +12724,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Prerequisites Completion of at least 24 credits of the AI degree, or consent of the instructor",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -12872,9 +12924,42 @@
       "C",
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "CS 1000",
+      "CS 2000",
+      "DS 1010",
+      "MA 2611",
+      "MA 2612"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "DS 1010"
+        ],
+        "text": "Data science basics equivalent to DS 1010",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 2611",
+          "MA 2612"
+        ],
+        "text": "applied statistics and regression equivalent to MA 2611 and MA 2612",
+        "connector": "AND"
+      },
+      {
+        "type": "OR",
+        "courses": [
+          "CS 1000",
+          "CS 2000"
+        ],
+        "text": "the ability to write computer programs in a scientific language equivalent to a CS programming course at the CS 1000 or CS 2000 level are assumed",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background Data science basics equivalent to DS 1010, applied statistics and regression equivalent to MA 2611 and MA 2612, and the ability to write computer programs in a scientific language equivalent to a CS programming course at the CS 1000 or CS 2000 level are assumed",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -12892,9 +12977,77 @@
       "B",
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "CS 1004",
+      "CS 1101",
+      "CS 1102",
+      "CS 2102",
+      "CS 2103",
+      "CS 2119",
+      "CS 3431",
+      "DS 1010",
+      "DS 2010",
+      "MA 2611",
+      "MA 2612",
+      "MIS 3720"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "DS 1010"
+        ],
+        "text": "Data science basics equivalent to DS 1010",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "DS 2010"
+        ],
+        "text": "data analysis principles and modeling equivalent to DS 2010",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 2611",
+          "MA 2612"
+        ],
+        "text": "knowledge of basic statistics equivalent to (MA 2611 and MA 2612)",
+        "connector": "AND"
+      },
+      {
+        "type": "OR",
+        "courses": [
+          "CS 1004",
+          "CS 1101",
+          "CS 1102",
+          "CS 2102"
+        ],
+        "text": "the ability to program equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102",
+        "connector": "AND"
+      },
+      {
+        "type": "OR",
+        "courses": [
+          "CS 2103",
+          "CS 2119"
+        ],
+        "text": "CS 2103 or CS 2119)",
+        "connector": "AND"
+      },
+      {
+        "type": "OR",
+        "courses": [
+          "CS 3431",
+          "MIS 3720"
+        ],
+        "text": "as well as understanding of databases equivalent to (CS 3431 or MIS 3720) are assumed",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background Data science basics equivalent to DS 1010, and data analysis principles and modeling equivalent to DS 2010, knowledge of basic statistics equivalent to (MA 2611 and MA 2612), and the ability to program equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102, CS 2103 or CS 2119), as well as understanding of databases equivalent to (CS 3431 or MIS 3720) are assumed",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -13519,7 +13672,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Prerequisites Completion of at least 24 credits of the AI degree, or consent of the instructor",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -13763,19 +13916,32 @@
       "D"
     ],
     "prerequisites": [
-      "ECE 2029"
+      "CS 2301",
+      "CS 2303",
+      "ECE 2010",
+      "ECE 2039"
     ],
     "prerequisites_structured": [
       {
+        "type": "OR",
+        "courses": [
+          "CS 2301",
+          "CS 2303",
+          "ECE 2039"
+        ],
+        "text": "ECE 2039 (preferred for ECE majors) or a course in C language programming such as CS 2301/3 or equivalent",
+        "connector": "AND"
+      },
+      {
         "type": "AND",
         "courses": [
-          "ECE 2029"
+          "ECE 2010"
         ],
-        "text": "ECE 2029 or equivalent knowledge of digital logic",
+        "text": "and ECE 2010 or equivalent knowledge in basic circuits",
         "connector": "AND"
       }
     ],
-    "raw_prerequisite_text": "Background: ECE 2029 or equivalent knowledge of digital logic, logic signals, and logic operations",
+    "raw_prerequisite_text": "Recommended Background ECE 2039 (preferred for ECE majors) or a course in C language programming such as CS 2301/3 or equivalent; and ECE 2010 or equivalent knowledge in basic circuits, devices and analysis",
     "aliases": [
       "ECE 2801",
       "RBE 2020"
@@ -13887,9 +14053,55 @@
       "B",
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "CS 1004",
+      "CS 1101",
+      "CS 1102",
+      "CS 2301",
+      "CS 2303",
+      "ECE 2010",
+      "ECE 2039",
+      "MA 2051"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "OR",
+        "courses": [
+          "CS 2301",
+          "CS 2303",
+          "ECE 2039"
+        ],
+        "text": "ECE 2039 (preferred for ECE majors) or a prior course in computer programming such as CS 2301/3",
+        "connector": "AND"
+      },
+      {
+        "type": "OR",
+        "courses": [
+          "CS 1101",
+          "CS 1102",
+          "CS 1004"
+        ],
+        "text": "CS 1004 or CS 1101/2",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 2051"
+        ],
+        "text": "MA 2051",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "ECE 2010"
+        ],
+        "text": "and ECE 2010",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background ECE 2039 (preferred for ECE majors) or a prior course in computer programming such as CS 2301/3, CS 1004 or CS 1101/2; MA 2051; and ECE 2010",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -14898,7 +15110,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Prerequisites: Undergraduate background in device physics, microelectronics, control systems, electromagnetism",
+    "raw_prerequisite_text": "background material, and design case studies",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -15642,29 +15854,9 @@
       "B",
       "D"
     ],
-    "prerequisites": [
-      "ECON 1110",
-      "ECON 1120"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "ECON 1110"
-        ],
-        "text": "An introductory background in economics (ECON 1110",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ECON 1120"
-        ],
-        "text": "ECON 1120",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: An introductory background in economics (ECON 1110, ECON 1120, or equivalent)",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in economics to learn about a special topic in Economics",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -16435,7 +16627,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required",
     "aliases": [],
     "raw_alias_text": "may not receive credit for both ENV 150X and ENV 1500 Students may not receive credit for both ENV 150X and ENV 1500"
   },
@@ -16628,7 +16820,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -16650,7 +16842,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background for all engineering disciplines",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -16691,7 +16883,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Recommended background: prior knowledge of college-level chemistry",
+    "raw_prerequisite_text": "background for all science and engineering disciplines regarding the capabilities and limitations of materials in our everyday lives",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -16764,9 +16956,49 @@
       "C",
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "ES 2501",
+      "MA 1021",
+      "MA 1022",
+      "MA 1023",
+      "MA 1024"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "ES 2501"
+        ],
+        "text": "mechanical systems (ES 2501 or equivalent)",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1021",
+          "MA 1022"
+        ],
+        "text": "differential (MA 1021) and integral (MA 1022) calculus",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1023"
+        ],
+        "text": "vector algebra (MA 1023)",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1024"
+        ],
+        "text": "double and triple integration (MA 1024)",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background; mechanical systems (ES 2501 or equivalent), differential (MA 1021) and integral (MA 1022) calculus, vector algebra (MA 1023), and double and triple integration (MA 1024)",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -16996,31 +17228,9 @@
       "B",
       "C"
     ],
-    "prerequisites": [
-      "MA 2051",
-      "PH 1120",
-      "PH 1121"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "MA 2051",
-          "PH 1120"
-        ],
-        "text": "Ordinary Differential Equations (MA 2051) and Electricity and Magnestism (PH 1120",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "PH 1121"
-        ],
-        "text": "PH 1121)",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: Ordinary Differential Equations (MA 2051) and Electricity and Magnestism (PH 1120, PH 1121)",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in mathematics is required; familiarity with Laplace transforms, complex variables and matrices is desirable but not mandatory",
     "aliases": [
       "ECE 3012"
     ],
@@ -17212,9 +17422,92 @@
     "terms": [
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "ACC 2101",
+      "BUS 1010",
+      "BUS 1020",
+      "BUS 2020",
+      "BUS 2060",
+      "BUS 3010",
+      "BUS 3020",
+      "BUS 4030",
+      "OIE 2850"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "ACC 2101"
+        ],
+        "text": "for this course consists of five of the following: ACC 2101",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 1010"
+        ],
+        "text": "BUS 1010",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 1020"
+        ],
+        "text": "BUS 1020",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 2020"
+        ],
+        "text": "BUS 2020",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 2060"
+        ],
+        "text": "BUS 2060",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 3010"
+        ],
+        "text": "BUS 3010",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 3020"
+        ],
+        "text": "BUS 3020",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "BUS 4030"
+        ],
+        "text": "BUS 4030",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "OIE 2850"
+        ],
+        "text": "OIE 2850",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background for this course consists of five of the following: ACC 2101, BUS 1010, BUS 1020, BUS 2020, BUS 2060, BUS 3010, BUS 3020, BUS 4030, ETR 3915, OIE 2850",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18181,22 +18474,9 @@
     "terms": [
       "C"
     ],
-    "prerequisites": [
-      "GN 3511",
-      "GN 3512"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "OR",
-        "courses": [
-          "GN 3511",
-          "GN 3512"
-        ],
-        "text": "GN 3511 (Advanced German I) and GN 3512 (Advanced German II) or equivalent",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: GN 3511 (Advanced German I) and GN 3512 (Advanced German II) or equivalent",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "Background readings in German and English provide the basis for in-class discussion of selected authentic German texts of various kinds: literary works, official documents, political manifestos, letters, and diaries",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18283,7 +18563,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background materials for students who wish to complete IQPs on topics that involve international relations or comparative political systems",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18643,7 +18923,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in the history of science and technology is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18682,7 +18962,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in the history of science is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18701,7 +18981,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in environmental history is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18720,7 +19000,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Recommended background: No recommended background",
+    "raw_prerequisite_text": "background in political history is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18740,7 +19020,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -18761,7 +19041,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required",
     "aliases": [
       "HI 3321"
     ],
@@ -19003,7 +19283,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required This course will be offered in 2020-21, and in alternating years thereafter",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -19201,9 +19481,22 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "SP 3521",
+      "SP 3522"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "SP 3521",
+          "SP 3522"
+        ],
+        "text": "SP3521 and SP 3522",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background SP3521 and SP 3522",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -20506,9 +20799,33 @@
     "terms": [
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "AR 2101",
+      "IMGD 1001",
+      "IMGD 2740",
+      "IMGD 2900"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "AR 2101",
+          "IMGD 2740"
+        ],
+        "text": "such as AR 2101 and IMGD 2740",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "IMGD 1001",
+          "IMGD 2900"
+        ],
+        "text": "such as IMGD 1001 and IMGD 2900",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background includes familiarity with 3d art and design software, interactive design fundamentals, such as AR 2101 and IMGD 2740, and experience with the development cycle, such as IMGD 1001 and IMGD 2900",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -20550,7 +20867,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in related fields",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -20648,7 +20965,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -20668,7 +20985,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -20825,7 +21142,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background is required",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -21182,7 +21499,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background",
     "aliases": [
       "MA 1022",
       "MA 1102"
@@ -22232,9 +22549,22 @@
     "terms": [
       "C"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "MA 1024",
+      "MA 2071"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1024",
+          "MA 2071"
+        ],
+        "text": "Multivariable calculus at the level of MA 1024: Calculus IV and linear algebra at the level of MA 2071: Matrices & Linear Algebra 1",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background Multivariable calculus at the level of MA 1024: Calculus IV and linear algebra at the level of MA 2071: Matrices & Linear Algebra 1",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -22474,22 +22804,9 @@
       "C",
       "D"
     ],
-    "prerequisites": [
-      "MA 3631",
-      "MA 4631"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "OR",
-        "courses": [
-          "MA 3631",
-          "MA 4631"
-        ],
-        "text": "MA 3631 or MA 4631",
-        "connector": "OR"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: MA 3631 or MA 4631",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in principles of statistics",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -22558,7 +22875,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Recommended background will vary from topic to topic and will thus be communicated by the Department of Mathematical Sciences for each offering",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -22722,22 +23039,9 @@
       "C",
       "D"
     ],
-    "prerequisites": [
-      "MA 2612",
-      "MA 2631"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "MA 2631",
-          "MA 2612"
-        ],
-        "text": "knowledge of basic probability at the level of MA 2631 and statistics at the level of MA 2612 is assumed.) This course is offered by special arrangement only",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Prerequisite: knowledge of basic probability at the level of MA 2631 and statistics at the level of MA 2612 is assumed.) This course is offered by special arrangement only, based on expressed student interest",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in the theory and methods of probability, stochastic processes and statistics for applications",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -22914,7 +23218,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Prerequisite: knowledge of the material in MA 540 is assumed.)",
+    "raw_prerequisite_text": "background in principles of statistics",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -23134,7 +23438,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in manufacturing process science and engineering should take this course",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -23296,29 +23600,9 @@
       "B",
       "D"
     ],
-    "prerequisites": [
-      "ES 2001",
-      "ME 1800"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "ME 1800"
-        ],
-        "text": "ME 1800 Materials Selection and Manufacturing Processes",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ES 2001"
-        ],
-        "text": "ES 2001 Introduction to Materials Science",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: ME 1800 Materials Selection and Manufacturing Processes, and ES 2001 Introduction to Materials Science",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background for anyone interested in manufacturing, design engineering design, sales, or management",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -23703,92 +23987,9 @@
       "B",
       "D"
     ],
-    "prerequisites": [
-      "ES 2001",
-      "ES 3001",
-      "ES 3003",
-      "ES 3004",
-      "ES 3502",
-      "ME 1800",
-      "ME 3310",
-      "ME 3311",
-      "ME 3320"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "ME 3310"
-        ],
-        "text": "mechanisms (ME 3310",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ME 3311"
-        ],
-        "text": "ME 3311)",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ES 3502"
-        ],
-        "text": "stressanalysis (ES 3502)",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ME 3320"
-        ],
-        "text": "design (ME 3320)",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ES 3001"
-        ],
-        "text": "thermo-fluids (ES 3001",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ES 3003"
-        ],
-        "text": "ES 3003",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ES 3004"
-        ],
-        "text": "ES 3004)",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ES 2001"
-        ],
-        "text": "materials (ES 2001)",
-        "connector": "AND"
-      },
-      {
-        "type": "AND",
-        "courses": [
-          "ME 1800"
-        ],
-        "text": "manufacturing (ME 1800)",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: mechanisms (ME 3310, ME 3311), stressanalysis (ES 3502), design (ME 3320), thermo-fluids (ES 3001, ES 3003,ES 3004), materials (ES 2001), manufacturing (ME 1800)",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in ME in a one-term designproject that is usually taken from a local company",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -24413,9 +24614,38 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "BB 3101",
+      "CH 1010",
+      "ES 2001"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "BB 3101"
+        ],
+        "text": "BB 3101 or equivalent Human Anatomy and Physiology",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "CH 1010"
+        ],
+        "text": "CH 1010 or equivalent General Chemistry",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "ES 2001"
+        ],
+        "text": "ES 2001 or equivalent Introduction to Materials Science and Engineering",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background BB 3101 or equivalent Human Anatomy and Physiology, CH 1010 or equivalent General Chemistry, ES 2001 or equivalent Introduction to Materials Science and Engineering, and basic mathematics through differential and integral calculus",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -24882,7 +25112,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Recommended background: mechanics, materials, physics, knowledge of a high-level computer programming language",
+    "raw_prerequisite_text": "background and interests",
     "aliases": [],
     "raw_alias_text": "Students cannot receive credit for this course if they have taken the Special Topics (ME 593J) version of the same course or ME 534"
   },
@@ -24993,7 +25223,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in engineering, math or science",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -25557,7 +25787,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in engineering, math or science",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -25746,20 +25976,9 @@
     "terms": [
       "D"
     ],
-    "prerequisites": [
-      "MIS 3720"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "MIS 3720"
-        ],
-        "text": "MIS 3720",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Recommended background: MIS 3720",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background in MIS in a one-term project focusing on development of creative solutions to open-ended business and manufacturing problems",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -27080,20 +27299,9 @@
       "C",
       "D"
     ],
-    "prerequisites": [
-      "ME 4850"
-    ],
-    "prerequisites_structured": [
-      {
-        "type": "AND",
-        "courses": [
-          "ME 4850"
-        ],
-        "text": "ME 4850 or equivalent.)",
-        "connector": "AND"
-      }
-    ],
-    "raw_prerequisite_text": "Prerequisites: MTE 511 and MTE 512, ME 4850 or equivalent.)",
+    "prerequisites": [],
+    "prerequisites_structured": [],
+    "raw_prerequisite_text": "background for various physical phenomena",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -27246,7 +27454,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in engineering, math or science",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -27455,7 +27663,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in music is necessary",
     "aliases": [
       "MU 2720"
     ],
@@ -27476,7 +27684,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in music is necessary",
     "aliases": [
       "MU 2721"
     ],
@@ -27565,7 +27773,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background for this course is MU 1100 (Foundations of Music Theory and Aural Skills) or its equivalent",
     "aliases": [
       "MU 1100",
       "MU 3002"
@@ -27934,7 +28142,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Recommended Background: some background in musical performance and/or composing",
+    "raw_prerequisite_text": "background will be empowered to compose works inspired by science",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -27972,7 +28180,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background in music is necessary",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -28167,7 +28375,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Prerequisites will vary with topic",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -28898,9 +29106,29 @@
       "B",
       "C"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "MA 1021",
+      "MA 1022"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1021"
+        ],
+        "text": "Working knowledge of differential calculus (MA 1021)",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1022"
+        ],
+        "text": "concurrent study of MA 1022 (integral calculus) or higher",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background Working knowledge of differential calculus (MA 1021), and concurrent study of MA 1022 (integral calculus) or higher",
     "aliases": [
       "PH 1111"
     ],
@@ -28919,9 +29147,22 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "MA 1021",
+      "MA 1022"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1021",
+          "MA 1022"
+        ],
+        "text": "Working knowledge of differential and integral calculus (MA 1021 and MA 1022)",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background Working knowledge of differential and integral calculus (MA 1021 and MA 1022)",
     "aliases": [
       "PH 1110"
     ],
@@ -28942,9 +29183,33 @@
       "C",
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "MA 1021",
+      "MA 1022",
+      "PH 1110",
+      "PH 1111"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "OR",
+        "courses": [
+          "PH 1110",
+          "PH 1111"
+        ],
+        "text": "Working knowledge of the material presented in PH 1110 or PH 1111",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "MA 1021",
+          "MA 1022"
+        ],
+        "text": "of differential and integral calculus (MA 1021 and MA 1022)",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background Working knowledge of the material presented in PH 1110 or PH 1111, of differential and integral calculus (MA 1021 and MA 1022)",
     "aliases": [
       "PH 1121"
     ],
@@ -29295,9 +29560,40 @@
     "terms": [
       "B"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "PH 1110",
+      "PH 1120",
+      "PH 1130",
+      "PH 1140"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "PH 1110"
+        ],
+        "text": "is PH 1110",
+        "connector": "AND"
+      },
+      {
+        "type": "AND",
+        "courses": [
+          "PH 1120"
+        ],
+        "text": "PH 1120",
+        "connector": "AND"
+      },
+      {
+        "type": "OR",
+        "courses": [
+          "PH 1130",
+          "PH 1140"
+        ],
+        "text": "PH 1130 and PH 1140 (or their equivalents)",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background is PH 1110, PH 1120, PH 1130 and PH 1140 (or their equivalents)",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -29741,7 +30037,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Recommended Background will be published along with the specific course description",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -29931,7 +30227,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "recommended background for this course is a bachelor’s degree in science or engineering",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -30198,7 +30494,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "background who is interested in learning about mental health",
     "aliases": [
       "PSY 1412"
     ],
@@ -32239,9 +32535,22 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "SP 1523",
+      "SP 1524"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "SP 1523",
+          "SP 1524"
+        ],
+        "text": "SP1523 and SP1524",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background SP1523 and SP1524",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -32260,7 +32569,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "raw_prerequisite_text": "Recommended background 2522",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -32277,9 +32586,20 @@
     "terms": [
       "C"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "SP 2522"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "SP 2522"
+        ],
+        "text": "SP 2522",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background SP 2522",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -32296,9 +32616,20 @@
     "terms": [
       "D"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "SP 3521"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "SP 3521"
+        ],
+        "text": "SP 3521",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended background SP 3521",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -32334,9 +32665,22 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "SP 3521",
+      "SP 3522"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "SP 3521",
+          "SP 3522"
+        ],
+        "text": "SP3521 and SP 3522",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background SP3521 and SP 3522",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -32404,9 +32748,22 @@
     "terms": [
       "A"
     ],
-    "prerequisites": [],
-    "prerequisites_structured": [],
-    "raw_prerequisite_text": "",
+    "prerequisites": [
+      "SP 3521",
+      "SP 3522"
+    ],
+    "prerequisites_structured": [
+      {
+        "type": "AND",
+        "courses": [
+          "SP 3522",
+          "SP 3521"
+        ],
+        "text": "SP3521 and 3522",
+        "connector": "AND"
+      }
+    ],
+    "raw_prerequisite_text": "Recommended Background SP3521 and 3522",
     "aliases": [],
     "raw_alias_text": ""
   },
@@ -32661,7 +33018,7 @@
     ],
     "prerequisites": [],
     "prerequisites_structured": [],
-    "raw_prerequisite_text": "Prerequisite: SYS 501 Concepts of Systems Engineering)",
+    "raw_prerequisite_text": "background and motivation for transitioning to MBSE from a document centric approach to systems engineering",
     "aliases": [],
     "raw_alias_text": ""
   },

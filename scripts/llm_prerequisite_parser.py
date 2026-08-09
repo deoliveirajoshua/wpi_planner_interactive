@@ -36,7 +36,8 @@ Your task is to analyze a given course code and its raw course description, then
 
 RULES AND CONVENTIONS:
 1. Prerequisites:
-   - Identify explicit prerequisites and recommended background courses (e.g. "Recommended background:", "Prerequisites:", "Prior knowledge in...").
+   - Identify explicit prerequisites and recommended background courses (e.g. "Recommended background:", "Prerequisites:", "Prior knowledge in...", "Recommended Background", "Background:").
+   - Note: Catalog descriptions frequently omit punctuation after background headers (e.g., "Recommended Background Data science basics equivalent to DS 1010..."). Extract these prerequisite clauses accurately.
    - Group them with logical relationships: "AND" (all required) or "OR" (alternatives/options).
    - Expand shorthand notations:
      * "CS 2102/3" -> "CS 2102", "CS 2103"
@@ -92,6 +93,56 @@ FEW_SHOT_EXAMPLES = [
             "aliases": ["CS 2103"],
             "raw_alias_text": "Students cannot receive credit for both CS 2102 and CS 2103.",
             "clean_description": "Cat. I This course introduces students to the object-oriented design and programming paradigm."
+        }
+    },
+    {
+        "course_code": "DS 3010",
+        "course_name": "Data Science III: Computational Methods",
+        "course_description": "Units 1/3. Computational methods to make informed decisions on large datasets. Recommended Background Data science basics equivalent to DS 1010, and modeling equivalent to DS 2010, knowledge of basic statistics equivalent to (MA 2611 and MA 2612), and programming equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102, CS 2103 or CS 2119), as well as databases equivalent to (CS 3431 or MIS 3720) are assumed.",
+        "expected_output": {
+            "prerequisites": ["CS 1004", "CS 1101", "CS 1102", "CS 2102", "CS 2103", "CS 2119", "CS 3431", "DS 1010", "DS 2010", "MA 2611", "MA 2612", "MIS 3720"],
+            "prerequisites_structured": [
+                {
+                    "type": "AND",
+                    "courses": ["DS 1010"],
+                    "text": "Data science basics equivalent to DS 1010",
+                    "connector": "AND"
+                },
+                {
+                    "type": "AND",
+                    "courses": ["DS 2010"],
+                    "text": "modeling equivalent to DS 2010",
+                    "connector": "AND"
+                },
+                {
+                    "type": "AND",
+                    "courses": ["MA 2611", "MA 2612"],
+                    "text": "knowledge of basic statistics equivalent to (MA 2611 and MA 2612)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "OR",
+                    "courses": ["CS 1004", "CS 1101", "CS 1102"],
+                    "text": "programming equivalent to (CS 1004 or CS 1101 or CS 1102)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "OR",
+                    "courses": ["CS 2102", "CS 2103", "CS 2119"],
+                    "text": "(CS 2102, CS 2103 or CS 2119)",
+                    "connector": "AND"
+                },
+                {
+                    "type": "OR",
+                    "courses": ["CS 3431", "MIS 3720"],
+                    "text": "databases equivalent to (CS 3431 or MIS 3720) are assumed",
+                    "connector": "AND"
+                }
+            ],
+            "raw_prerequisite_text": "Recommended Background Data science basics equivalent to DS 1010, and modeling equivalent to DS 2010, knowledge of basic statistics equivalent to (MA 2611 and MA 2612), and programming equivalent to (CS 1004 or CS 1101 or CS 1102) and (CS 2102, CS 2103 or CS 2119), as well as databases equivalent to (CS 3431 or MIS 3720) are assumed.",
+            "aliases": [],
+            "raw_alias_text": "",
+            "clean_description": "Units 1/3. Computational methods to make informed decisions on large datasets."
         }
     },
     {

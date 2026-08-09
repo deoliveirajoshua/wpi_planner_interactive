@@ -129,7 +129,7 @@ def parse_prerequisites(description: str, valid_codes: Set[str] = None) -> Tuple
             if not codes_in_neg:
                 return [], [], raw_snippet
 
-    prereq_pattern = r'(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-]\s*(.*?)(?=\.\s+[A-Z]|\.\s*Students|\.\s*~Note|\.$|\n|$)'
+    prereq_pattern = r'(recommended background|prerequisite[s]?|pre-requisite[s]?|background)\s*[:\-]?(?:\s+|\b)(.*?)(?=\.\s+[A-Z]|\.\s*Students|\.\s*~Note|\.$|\n|$)'
     m = re.search(prereq_pattern, description, re.IGNORECASE)
 
     if not m:
