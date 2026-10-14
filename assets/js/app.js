@@ -4,10 +4,6 @@
  * Path Walking & Recursive Prerequisite Tree Unwinding
  */
 
-// ============================================================================
-// FEATURE FLAGS — toggle these to enable/disable site-wide features
-// ============================================================================
-const SHOW_WIP_BANNER = true; // Set false to hide the WIP notice (e.g. for production)
 
 let rawGraphData = {};
 let network = null;
@@ -483,10 +479,6 @@ async function initApp() {
 
     // Launch tutorial immediately on site load
     startTutorial();
-
-    // WIP Banner — controlled by SHOW_WIP_BANNER feature flag
-    const wipBanner = document.getElementById('wip-banner');
-    if (wipBanner) wipBanner.style.display = SHOW_WIP_BANNER ? 'flex' : 'none';
 
     // Hide search dropdown on click outside
     document.addEventListener('click', function (e) {
